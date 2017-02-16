@@ -66,8 +66,8 @@ namespace Explainer
             PrintLine(50, "Harvester bundance multiplier", String.Format("\"{0}% base efficiency\"", extractionAbundanceMultiplier * 100));
             PrintLine(50, "Rate", String.Format("\"{0}/s\"", extractionAbundanceMultiplier * locationResourceAbundance));
             PrintLine(0, "");
-            PrintLine(50, "\"Core Temperature\"", partTemperature.ToString());
-            PrintLine(50, "Max temperature", maxTemp.ToString());
+            PrintLine(50, "\"Core Temperature\"", String.Format("{0:0.00}", partTemperature));
+                      PrintLine(50, "Max temperature", String.Format("{0:0.00}", maxTemp));
             PrintLine(50, "\"Thermal Efficiency\" (from some curves)", String.Format("{0}%", 100 * thermalEfficiency));
             PrintLine(0, "");
             PrintLine(50, "Bays", numBays.ToString());
