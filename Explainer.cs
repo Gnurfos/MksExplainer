@@ -20,8 +20,10 @@ namespace Explainer
      *  - due to environment (planetary abundance, part temp ...)
      *  - due to resource storage
      * 
-     * TOFIX:
-     *  - cache resource abundance
+     * TODO:
+     *  - converters explainer (with efficiency parts)
+     *  - recyclers explainer
+     *  - kolonization bonuses impact ?
      */
 
     [KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -103,33 +105,6 @@ namespace Explainer
             }
         }
 
-        private class BestCrewSkillLevels
-        {
-            public class BestSkillLevel
-            {
-                public float level;
-                public HashSet<string> kerbals;
-                public BestSkillLevel(float l, HashSet<string> ks) { level = l; kerbals = ks; }
-            }
-            public Dictionary<string, BestSkillLevel> skillLevelNames = new Dictionary<string, BestSkillLevel>();
-            public void updateWith(string skill, string kerbal, float level)
-            {
-                if (!skillLevelNames.ContainsKey(skill) || (skillLevelNames[skill].level < level - float.Epsilon))
-                {
-                    skillLevelNames[skill] = new BestSkillLevel(level, new HashSet<string> { FirstName(kerbal) });
-                }
-                else if (skillLevelNames.ContainsKey(skill) && (Math.Abs(skillLevelNames[skill].level - level) < float.Epsilon))
-                {
-                    skillLevelNames[skill].kerbals.Add(FirstName(kerbal));
-                }
-
-            }
-            private static string FirstName(string fullName)
-            {
-                return fullName.Replace(" Kerman", "");
-            }
-        }
-
         private void Display()
         {
             var vessel = FlightGlobals.ActiveVessel;
@@ -140,7 +115,7 @@ namespace Explainer
                     DisplayHeader("Harvester: " + p.name);
                     foreach (var m in p.FindModulesImplementing<ModuleResourceHarvester_USI>())
                     {
-                        DisplayHarvesterModule(m, vessel, p);
+                        DrillsExplainer.DisplayHarvesterModule(m, vessel, p, GetBestCrewSkillLevels(vessel));
                     }
                 }
             }
@@ -171,140 +146,6 @@ namespace Explainer
             }
             return bestCrewSkillLevels;
         }
-
-        private void DisplayHarvesterModule(ModuleResourceHarvester_USI harvester, Vessel vessel, Part part)
-        {
-            var numBays = harvester.BonusList["SwapBay"];
-            if (numBays < float.Epsilon)
-                return;
-
-            if (!harvester.IsActivated)
-            {
-                Line(harvester.ResourceName, "Not activated");
-                return;
-            }
-            Line(harvester.ResourceName, "Activated");
-
-            // For debug
-            //Line("EfficiencyMultiplier", harvester.GetEfficiencyMultiplier().ToString()); // thermal eff * eff due to specialist
-            //Line("res status", harvester.ResourceStatus.ToString()); x/sec displayed by KSP. trash
-            //Line("eff bonus", harvester.GetEfficiencyBonus().ToString()); // same a SwapBay ?
-
-            SpecialistBonusExplanation specBonus = harvester.UseSpecialistBonus ? new SpecialistBonusExplanation(
-                harvester.SpecialistBonusBase,
-                harvester.SpecialistEfficiencyFactor,
-                harvester.ExperienceEffect,
-                GetBestCrewSkillLevels(vessel)) : null;
-
-            ExplainHarvester(
-                ResourceCache.GetAbundance(harvester.ResourceName, vessel),
-                numBays,
-                harvester.GetCoreTemperature(),
-                harvester.ThermalEfficiency.maxTime,
-                harvester.ThermalEfficiency.Evaluate((float)harvester.GetCoreTemperature()),
-                harvester.Efficiency,
-                specBonus);
-
-            /*
-            Line("Planetary abundance", GetAbundance(harvester.ResourceName, vessel).ToString());
-
-            Line("Bays", numBays.ToString());
-
-            Line("Temperature", part.temperature.ToString());
-            Line("ThermalEfficiency", harvester.ThermalEfficiency.Evaluate(part.temperature).ToString());
-
-            Line("Efficiency (abundance multiplier)", harvester.Efficiency.ToString());
-
-
-            Line("UseSpecialistBonus", harvester.UseSpecialistBonus.ToString());
-            Line("SpecialistBonusBase", harvester.SpecialistBonusBase.ToString());
-            Line("ExperienceEffect", harvester.ExperienceEffect);*/
-
-        }
-
-        private class SpecialistBonusExplanation
-        {
-            private float SpecialistBonusBase;
-            private float SpecialistEfficiencyFactor;
-            private string Effect;
-            private float BestLevel = 0;
-            private string BestKerbal = "";
-            public SpecialistBonusExplanation(float bb, float ef, string e, BestCrewSkillLevels bestLevels)
-            {
-                SpecialistBonusBase = bb;
-                SpecialistEfficiencyFactor = ef;
-                Effect = e;
-                if (bestLevels.skillLevelNames.ContainsKey(e))
-                {
-                    BestLevel = bestLevels.skillLevelNames[e].level;
-                    BestKerbal = bestLevels.skillLevelNames[e].kerbals.ElementAt(0);
-                }
-            }
-            public string Explain()
-            {
-                return String.Format("Skill: {0} : {1}+{2}/lvl = {3} ({4})", Effect, SpecialistBonusBase, SpecialistEfficiencyFactor, GetValue(), GetBestKerbalDescription());
-            }
-            public float GetValue()
-            {
-                var result = SpecialistBonusBase;
-                if (BestLevel > float.Epsilon)
-                {
-                    result = SpecialistBonusBase + SpecialistEfficiencyFactor * (BestLevel + 1);
-                }
-                return result;
-            }
-            private string GetBestKerbalDescription()
-            {
-                if (BestLevel > float.Epsilon)
-                {
-                    return String.Format("best={0}, lvl{1}", BestKerbal, BestLevel);
-                }
-                else
-                {
-                    return "no specialist with skill on board";
-                }
-            }
-        }
-
-        private void ExplainHarvester(
-            float locationResourceAbundance,
-            float numBays,
-            double partTemperature,
-            float maxTemp,
-            float thermalEfficiency,
-            float extractionAbundanceMultiplier,
-            SpecialistBonusExplanation specialistBonus)
-        {
-            Line("", "");
-            Line("Resource abundance at location", locationResourceAbundance.ToString());
-            Line("Harvester bundance multiplier", String.Format("\"{0}% base efficiency\"", extractionAbundanceMultiplier * 100));
-            Line("Rate", String.Format("\"{0}/s\"", extractionAbundanceMultiplier * locationResourceAbundance));
-            Line("", "");
-            Line("\"Core Temperature\"", partTemperature.ToString());
-            Line("Max temperature", maxTemp.ToString());
-            Line("\"Thermal Efficiency\" (from some curves)", String.Format("{0}%", 100 * thermalEfficiency));
-            Line("", "");
-            Line("Bays", numBays.ToString());
-            Line("", "");
-            float load;
-            if (specialistBonus != null)
-            {
-                Line("Specialist bonus", specialistBonus.Explain());
-                Line("", "");
-                load = thermalEfficiency * specialistBonus.GetValue() * numBays;
-                Line("\"load\" = ThermalEfficiency * SpecialistBonus * NumBays", String.Format("{0}%", load * 100));
-            }
-            else
-            {
-                load = thermalEfficiency * numBays;
-                Line("\"load\" = ThermalEfficiency * NumBays", String.Format("{0}%", load * 100));
-            }
-            Line("", "");
-            Line("Actual obtention rate = Rate * load", String.Format("{0}/s", load * extractionAbundanceMultiplier * locationResourceAbundance));
-
-            Line("----------------", "");
-        }
-
 
         private void DisplayHeader(string h)
         {

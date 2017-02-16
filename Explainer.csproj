@@ -61,7 +61,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Misc.cs" />
     <Compile Include="Explainer.cs" />
+    <Compile Include="DrillsExplainer.cs" />
     <Compile Include="ResourceCache.cs" />
   </ItemGroup>
   <ItemGroup>
