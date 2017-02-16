@@ -26,10 +26,10 @@ namespace Explainer
 
             if (!harvester.IsActivated)
             {
-                Line(harvester.ResourceName, "Not activated");
+                PrintLine(20, harvester.ResourceName + ": Not activated");
                 return;
             }
-            Line(harvester.ResourceName, "Activated");
+            PrintLine(20, harvester.ResourceName + ": Activated");
 
             // For debug
             //Line("EfficiencyMultiplier", harvester.GetEfficiencyMultiplier().ToString()); // thermal eff * eff due to specialist
@@ -61,44 +61,47 @@ namespace Explainer
             float extractionAbundanceMultiplier,
             SpecialistBonusExplanation specialistBonus)
         {
-            Line("", "");
-            Line("Resource abundance at location", locationResourceAbundance.ToString());
-            Line("Harvester bundance multiplier", String.Format("\"{0}% base efficiency\"", extractionAbundanceMultiplier * 100));
-            Line("Rate", String.Format("\"{0}/s\"", extractionAbundanceMultiplier * locationResourceAbundance));
-            Line("", "");
-            Line("\"Core Temperature\"", partTemperature.ToString());
-            Line("Max temperature", maxTemp.ToString());
-            Line("\"Thermal Efficiency\" (from some curves)", String.Format("{0}%", 100 * thermalEfficiency));
-            Line("", "");
-            Line("Bays", numBays.ToString());
-            Line("", "");
+            PrintLine(0, "");
+            PrintLine(50, "Resource abundance at location", locationResourceAbundance.ToString());
+            PrintLine(50, "Harvester bundance multiplier", String.Format("\"{0}% base efficiency\"", extractionAbundanceMultiplier * 100));
+            PrintLine(50, "Rate", String.Format("\"{0}/s\"", extractionAbundanceMultiplier * locationResourceAbundance));
+            PrintLine(0, "");
+            PrintLine(50, "\"Core Temperature\"", partTemperature.ToString());
+            PrintLine(50, "Max temperature", maxTemp.ToString());
+            PrintLine(50, "\"Thermal Efficiency\" (from some curves)", String.Format("{0}%", 100 * thermalEfficiency));
+            PrintLine(0, "");
+            PrintLine(50, "Bays", numBays.ToString());
+            PrintLine(0, "");
             float load;
             if (specialistBonus != null)
             {
-                Line("Specialist bonus", specialistBonus.Explain());
-                Line("", "");
+                PrintLine(50, "Specialist bonus", specialistBonus.Explain());
+                PrintLine(0, "");
                 load = thermalEfficiency * specialistBonus.GetValue() * numBays;
-                Line("\"load\" = ThermalEfficiency * SpecialistBonus * NumBays", String.Format("{0}%", load * 100));
+                PrintLine(50, "\"load\" = ThermalEfficiency * SpecialistBonus * NumBays", String.Format("{0}%", load * 100));
             }
             else
             {
                 load = thermalEfficiency * numBays;
-                Line("\"load\" = ThermalEfficiency * NumBays", String.Format("{0}%", load * 100));
+                PrintLine(50, "\"load\" = ThermalEfficiency * NumBays", String.Format("{0}%", load * 100));
             }
-            Line("", "");
-            Line("Actual obtention rate = Rate * load", String.Format("{0}/s", load * extractionAbundanceMultiplier * locationResourceAbundance));
+            PrintLine(0, "");
+            PrintLine(50, "Actual obtention rate = Rate * load", String.Format("{0}/s", load * extractionAbundanceMultiplier * locationResourceAbundance));
 
-            Line("----------------", "");
+            PrintLine(50, "----------------", "");
         }
 
-        private static void Line(string a, string b)
+        private static void PrintLine(int margin, string content, params string[] more)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label("", _labelStyle, GUILayout.Width(50));
-            GUILayout.Label(a, _labelStyle, GUILayout.Width(255));
-            GUILayout.Label(b, _labelStyle, GUILayout.Width(255));
+            if (margin != 0)
+                GUILayout.Label("", _labelStyle, GUILayout.Width(margin));
+            GUILayout.Label(content, _labelStyle, GUILayout.Width(400));
+            foreach (var item in more)
+                GUILayout.Label(item, _labelStyle, GUILayout.Width(150));
             GUILayout.EndHorizontal();
         }
+
 
     }
 }

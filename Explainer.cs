@@ -112,7 +112,7 @@ namespace Explainer
             {
                 if (p.FindModuleImplementing<ModuleResourceHarvester_USI>())
                 {
-                    DisplayHeader("Harvester: " + p.name);
+                    PrintLine("Harvester: " + p.name);
                     foreach (var m in p.FindModulesImplementing<ModuleResourceHarvester_USI>())
                     {
                         DrillsExplainer.DisplayHarvesterModule(m, vessel, p, GetBestCrewSkillLevels(vessel));
@@ -120,15 +120,14 @@ namespace Explainer
                 }
             }
 
-            /*
-            DisplayHeader("Best skills: ");
+            PrintLine("Best skills: ");
             foreach (var item in GetBestCrewSkillLevels(vessel).skillLevelNames)
             {
                 var skill = item.Key;
                 var best = item.Value;
                 var knames = string.Join(", ", best.kerbals.ToArray());
-                Line(skill, "Level " + best.level.ToString() + " (" + knames + ")");
-            }*/
+                PrintLine(skill + ": Level " + best.level.ToString() + " (" + knames + ")", 50);
+            }
         }
 
         private BestCrewSkillLevels GetBestCrewSkillLevels(Vessel vessel)
@@ -147,21 +146,12 @@ namespace Explainer
             return bestCrewSkillLevels;
         }
 
-        private void DisplayHeader(string h)
+        private void PrintLine(string content, int margin=0)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(h, _labelStyle, GUILayout.Width(200));
-            GUILayout.Label("", _labelStyle, GUILayout.Width(255));
-            GUILayout.Label("", _labelStyle, GUILayout.Width(255));
-            GUILayout.EndHorizontal();
-        }
-
-        private void Line(string a, string b)
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("", _labelStyle, GUILayout.Width(200));
-            GUILayout.Label(a, _labelStyle, GUILayout.Width(255));
-            GUILayout.Label(b, _labelStyle, GUILayout.Width(255));
+            if (margin != 0)
+                GUILayout.Label("", _labelStyle, GUILayout.Width(margin));
+            GUILayout.Label(content, _labelStyle, GUILayout.Width(200));
             GUILayout.EndHorizontal();
         }
 
