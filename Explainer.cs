@@ -118,6 +118,15 @@ namespace Explainer
                         DrillsExplainer.DisplayHarvesterModule(m, vessel, p, GetBestCrewSkillLevels(vessel));
                     }
                 }
+
+                if (p.FindModuleImplementing<ModuleResourceConverter_USI>())
+                {
+                    PrintLine("Converter: " + p.name);
+                    foreach (var m in p.FindModulesImplementing<ModuleResourceConverter_USI>())
+                    {
+                        ConverterExplainer.DisplayConverterModule(m, vessel, p, GetBestCrewSkillLevels(vessel));
+                    }
+                }
             }
 
             PrintLine("Best skills: ");
