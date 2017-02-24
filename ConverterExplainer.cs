@@ -72,42 +72,11 @@ namespace Explainer
                 var effPartsBonus = ExplainEffPartsBonus(converter, vessel, part, bestCrewSkillLevels, geoBonus);
                 PrintLine(60, String.Format("Geology bonus {0:0.##}", geoBonus));
                 var mksBonus = geoBonus * geoBonus * effPartsBonus;
-                PrintLine(40, String.Format("MKS bonus (=geo*geo*effpartsbonus): {0:0.##} (game reports {1})", mksBonus, converter.BonusList["MKS"]));
+                PrintLine(40, String.Format("MKS bonus (=geo*geo*effpartsbonus): {0:0.##})", mksBonus));
                 tot *= mksBonus;
             }
             PrintLine(30, String.Format("Total load {0:0.##}", tot));
-            PrintLine(40, "BonusList");
-            foreach (var b in converter.BonusList) // SwapBay 2, MKS 
-            {
-                PrintLine(50, b.Key + ": " + b.Value.ToString());
-            }
-
-
-            // For debug
-            //Line("EfficiencyMultiplier", harvester.GetEfficiencyMultiplier().ToString()); // thermal eff * eff due to specialist
-            //Line("res status", harvester.ResourceStatus.ToString()); x/sec displayed by KSP. trash
-            //Line("eff bonus", harvester.GetEfficiencyBonus().ToString()); // same a SwapBay ?
-
-
-            /*
-
-
-            PrintLine(50, "GetEfficiencyBonus", converter.GetEfficiencyBonus().ToString()); // 2 for 2 bays           . 2.123502 with 1 full smelter
-            PrintLine(80, "BonusList");
-            foreach (var b in converter.BonusList) // SwapBay 2, MKS 1.061751 =  1 + (0.83 / 13.441)
-            {
-                PrintLine(100, b.Key + ": " + b.Value.ToString());
-            }
-            PrintLine(50, "GetEfficiencyMultiplier", converter.GetEfficiencyMultiplier().ToString()); // 2.5 ?        . 2.6543781  with 1 full smelter
-            PrintLine(50, "GetCrewBonus", converter.GetCrewBonus().ToString()); // 1.25 with max specialist
-            PrintResourceList("reqList", converter.reqList);
-            PrintResourceList("inputList", converter.inputList);
-            PrintResourceList("outputList", converter.outputList);
-            PrintLine(50, "Resources");
-            foreach (var res in part.Resources)
-            {
-                PrintLine(100, String.Format("{0}: {1}/{2}", res.resourceName, res.amount, res.maxAmount));
-            }*/
+            // TODO print resources gain/loss rate
 
         }
 
@@ -136,22 +105,13 @@ namespace Explainer
 
             var mksModule = part.FindModuleImplementing<MKSModule>();
 
-
-            //PrintLine(50, "eTag", mksModule.eTag);
-            //PrintLine(50, "eMultiplier", mksModule.eMultiplier.ToString()); // 13.441
-            //PrintLine(50, "BonusEffect", mksModule.BonusEffect);
-
-            // ModuleEfficiencyPart == efficiency part (provider)
-
             // TOFIX kolony instead of vessel
             var effPartsContributions = 0d;
             foreach (var epm in vessel.FindPartModulesImplementing<ModuleEfficiencyPart>())
             {
                 var ep = epm.part;
-                //PrintLine(120, String.Format("ep {0}, epm.name {1}, epm.EfficiencyBonus {2}, epm.eTag {3}, epm.IsActivated {4}, epm.EfficiencyMultiplier {5}", ep.name, epm.ConverterName, epm.EfficiencyBonus, epm.eTag, epm.IsActivated, epm.EfficiencyMultiplier));
                 if (epm.eTag == mksModule.eTag)
                 {
-                    //PrintLine(80, "EfficiencyBonus", epm.EfficiencyBonus.ToString()); // 1 if part if configured as smelter else 0 (=numbays)
                     if (epm.EfficiencyBonus < float.Epsilon)
                     {
                         continue;
@@ -186,16 +146,10 @@ namespace Explainer
                     }
                     PrintLine(100, String.Format("Geology bonus {0:0.##}", geoBonus));
                     totEff *= geoBonus * geoBonus;
-                    PrintLine(100, String.Format("Total efficiency = geo*geo*resource_ratio*gov*skill= {0:0.##} (game reports {1:0.##})", totEff, epm.EfficiencyMultiplier));
+                    PrintLine(100, String.Format("Total efficiency = geo*geo*resource_ratio*gov*skill = {0:0.##}", totEff));
                     PrintLine(100, "eMultiplier", epm.eMultiplier.ToString()); // 0.83
                     PrintLine(100, String.Format("Total contribution {0:0.##}", epm.eMultiplier * totEff));
                     effPartsContributions += epm.eMultiplier * totEff;
-                    /*
-                    PrintLine(110, "epm BonusList");
-                    foreach (var b in epm.BonusList) // 
-                    {
-                        PrintLine(120, b.Key + ": " + b.Value.ToString());
-                    }*/
                 }
             }
 
@@ -225,47 +179,33 @@ namespace Explainer
         
         }
 
-                // Generic remarks
-                // PostProcess result.TimeFactor/deltaTime seems to be the req res ratio ex 0.5 for 15/30 machinery. iow: result.TimeFactor = req_res_ratio * deltaTime
-                // geo bonus = sum(researches) -> sqrt -> divide by settings EfficiencyMultiplier (10000) -> add settings starting (1)
+        // Generic remarks
+        // PostProcess result.TimeFactor/deltaTime seems to be the req res ratio ex 0.5 for 15/30 machinery. iow: result.TimeFactor = req_res_ratio * deltaTime
+        // geo bonus = sum(researches) -> sqrt -> divide by settings EfficiencyMultiplier (10000) -> add settings starting (1)
 
-                // to give +10% geo: need 1 000 000 research
-                // to give +20% geo: need 4 000 000 research
-                // to give +50% geo: need 25 000 000 research
-                // to give +100% geo: need 100 000 000 research
-                // to give +200% geo: need 400 000 000 research
-                // to give +500% geo: need 2 500 000 000 research
+        // to give +10% geo: need 1 000 000 research
+        // to give +20% geo: need 4 000 000 research
+        // to give +50% geo: need 25 000 000 research
+        // to give +100% geo: need 100 000 000 research
+        // to give +200% geo: need 400 000 000 research
+        // to give +500% geo: need 2 500 000 000 research
 
-                // test giving 50% geo, 20% bota, 10% kolo 
-                // 2metal bays, no eff: 337.50% load , MKS bonus 2.25   . kerb 1.25 * 2bays  * 60%mach => yes
-                // with smelter or crusher 384.39 (each says 225% load) . MKS bonus 2.562613 = geo*geo*(1+sum(eff emul)/sum(conv emul) = 2.25*(1+(x / 13.144)) .. x = 13.144 *( 2.562613/2.25 - 1) = 1,826215676 = 2.25 * 0.83
-                //    crusher mks bonus 2.25
-                // with smelter+crusher 431.28
-                //
-                // after fix
-                // 384.38 load with both
-                // 337.49 with just crusher
-                //  with just smelter
-                // with just smelter and another converter at 48/2000mach 7.22% load : 360.93% load, MKs bonus 2.406302 =? 2.25*(1+ ( 2.25*0.83 / 2*13.144 )
+        // test giving 50% geo, 20% bota, 10% kolo 
+        // 2metal bays, no eff: 337.50% load , MKS bonus 2.25   . kerb 1.25 * 2bays  * 60%mach => yes
+        // with smelter or crusher 384.39 (each says 225% load) . MKS bonus 2.562613 = geo*geo*(1+sum(eff emul)/sum(conv emul) = 2.25*(1+(x / 13.144)) .. x = 13.144 *( 2.562613/2.25 - 1) = 1,826215676 = 2.25 * 0.83
+        //    crusher mks bonus 2.25
+        // with smelter+crusher 431.28
+        //
+        // after fix
+        // 384.38 load with both
+        // 337.49 with just crusher
+        //  with just smelter
+        // with just smelter and another converter at 48/2000mach 7.22% load : 360.93% load, MKs bonus 2.406302 =? 2.25*(1+ ( 2.25*0.83 / 2*13.144 )
 
-                // actually
-                // skill RepBoost boosts kolonization research
-                // skill FundsBoost boosts geology research
-                // skill ScienceBoost boosts science research
-
-
-                // Metals 2 bays. mach 1200/2000
-                // When smelter active 15/30 => 154.63%load 
-                // (governor is for transition 0 to 1)
-                // When inactive: 150% load
-                // 1.5 + 0.0463
-
-                // 0.0464 =? 
-
-                // full mach 159.26%  1200 mach /2000 = 60%
-                // 159 = 60% * GetEfficiencyMultiplier
-
-                // 0.83 / 13.144 = 0.063146683
+        // actually
+        // skill RepBoost boosts kolonization research
+        // skill FundsBoost boosts geology research
+        // skill ScienceBoost boosts science research
 
         private static void PrintResourceList(string label, List<ResourceRatio> list)
         {
