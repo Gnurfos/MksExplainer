@@ -29,19 +29,67 @@ namespace Explainer
                 PrintLine(20, converter.ConverterName + ": Not activated");
                 return;
             }
+            if (typeof(ModuleEfficiencyPart).IsInstanceOfType(converter))
+            {
+                PrintLine(20, converter.ConverterName + ": Effiency part (not a real converter)");
+                return;
+            }
             PrintLine(20, converter.ConverterName + ": Activated");
+
+            var tot = 1d;
+
+            if (converter.UseSpecialistBonus)
+            {
+                SpecialistBonusExplanation specBonus = new SpecialistBonusExplanation(
+                                                           converter.SpecialistBonusBase,
+                                                           converter.SpecialistEfficiencyFactor,
+                                                           converter.ExperienceEffect,
+                                                           bestCrewSkillLevels);
+                PrintLine(40, String.Format("Crew bonus {0:0.##} ({1})", converter.GetCrewBonus(), specBonus.Explain()));
+                tot *= converter.GetCrewBonus();
+            }
+            if (numBays > 1 + float.Epsilon)
+            {
+                PrintLine(40, String.Format("Bays: {0}", numBays));
+                tot *= numBays;
+            }
+
+            if (converter.reqList != null)
+            {
+                foreach (var res in converter.reqList)
+                {
+                    var amountInPart = part.Resources[res.ResourceName].amount;
+                    var bonus = amountInPart / res.Ratio;
+                    PrintLine(40, String.Format("{0} {1:0.##} ({2:0.##}/{3:0.##})", res.ResourceName, bonus, amountInPart, res.Ratio));
+                    tot *= bonus;
+                }
+            }
+
+            if (part.FindModuleImplementing<MKSModule>() != null)
+            {
+                // MKSModule == efficiency parts benefiter + kolonization bonuses benefiter
+                var geoBonus = KolonizationManager.GetGeologyResearchBonus(vessel.mainBody.flightGlobalsIndex);
+                var effPartsBonus = ExplainEffPartsBonus(converter, vessel, part, bestCrewSkillLevels, geoBonus);
+                PrintLine(60, String.Format("Geology bonus {0:0.##}", geoBonus));
+                var mksBonus = geoBonus * geoBonus * effPartsBonus;
+                PrintLine(40, String.Format("MKS bonus (=geo*geo*effpartsbonus): {0:0.##} (game reports {1})", mksBonus, converter.BonusList["MKS"]));
+                tot *= mksBonus;
+            }
+            PrintLine(30, String.Format("Total load {0:0.##}", tot));
+            PrintLine(40, "BonusList");
+            foreach (var b in converter.BonusList) // SwapBay 2, MKS 
+            {
+                PrintLine(50, b.Key + ": " + b.Value.ToString());
+            }
+
 
             // For debug
             //Line("EfficiencyMultiplier", harvester.GetEfficiencyMultiplier().ToString()); // thermal eff * eff due to specialist
             //Line("res status", harvester.ResourceStatus.ToString()); x/sec displayed by KSP. trash
             //Line("eff bonus", harvester.GetEfficiencyBonus().ToString()); // same a SwapBay ?
 
-            SpecialistBonusExplanation specBonus = converter.UseSpecialistBonus ? new SpecialistBonusExplanation(
-                converter.SpecialistBonusBase,
-                converter.SpecialistEfficiencyFactor,
-                converter.ExperienceEffect,
-                bestCrewSkillLevels) : null;
 
+            /*
 
 
             PrintLine(50, "GetEfficiencyBonus", converter.GetEfficiencyBonus().ToString()); // 2 for 2 bays           . 2.123502 with 1 full smelter
@@ -59,9 +107,15 @@ namespace Explainer
             foreach (var res in part.Resources)
             {
                 PrintLine(100, String.Format("{0}: {1}/{2}", res.resourceName, res.amount, res.maxAmount));
-            }
+            }*/
 
-            // MKSModule == efficiency parts benefiter
+        }
+
+
+        private static double ExplainEffPartsBonus(ModuleResourceConverter_USI converter, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels, float geoBonus)
+        {    
+
+            // MKSModule == efficiency parts benefiter + kolonization bonuses benefiter
             // refreshed every 5 seconds
             // set the MKS bonus (of all IEfficiencyBonusConsumer modules) to : GetEfficiencyBonus()
             //           GetEfficiencyBonus() = totBonus = geoBonus * GetPlanetaryBonus() * GetEfficiencyRate()
@@ -79,33 +133,97 @@ namespace Explainer
              *    records the best curEParts seen (although 1 "best seen" will update the 2)
              * ret 1 + _effPartTotal / _colonyConverterEff
              * */
-            if (part.FindModuleImplementing<MKSModule>() != null)
+
+            var mksModule = part.FindModuleImplementing<MKSModule>();
+
+
+            //PrintLine(50, "eTag", mksModule.eTag);
+            //PrintLine(50, "eMultiplier", mksModule.eMultiplier.ToString()); // 13.441
+            //PrintLine(50, "BonusEffect", mksModule.BonusEffect);
+
+            // ModuleEfficiencyPart == efficiency part (provider)
+
+            // TOFIX kolony instead of vessel
+            var effPartsContributions = 0d;
+            foreach (var epm in vessel.FindPartModulesImplementing<ModuleEfficiencyPart>())
             {
-                var mksModule = part.FindModuleImplementing<MKSModule>();
-                PrintLine(50, "eTag", mksModule.eTag);
-                PrintLine(50, "eMultiplier", mksModule.eMultiplier.ToString()); // 13.441
-                PrintLine(50, "BonusEffect", mksModule.BonusEffect);
-                // ModuleEfficiencyPart == efficiency part (provider)
-                foreach (var epm in vessel.FindPartModulesImplementing<ModuleEfficiencyPart>())
+                var ep = epm.part;
+                //PrintLine(120, String.Format("ep {0}, epm.name {1}, epm.EfficiencyBonus {2}, epm.eTag {3}, epm.IsActivated {4}, epm.EfficiencyMultiplier {5}", ep.name, epm.ConverterName, epm.EfficiencyBonus, epm.eTag, epm.IsActivated, epm.EfficiencyMultiplier));
+                if (epm.eTag == mksModule.eTag)
                 {
-                    var ep = epm.part;
-                    if (epm.eTag == mksModule.eTag)
+                    //PrintLine(80, "EfficiencyBonus", epm.EfficiencyBonus.ToString()); // 1 if part if configured as smelter else 0 (=numbays)
+                    if (epm.EfficiencyBonus < float.Epsilon)
                     {
-                        PrintLine(50, "Efficiency part on vessel: " + ep.name);
-                        PrintLine(80, epm.ConverterName + " activated: " + epm.IsActivated);
-                        PrintLine(80, "eMultiplier", epm.eMultiplier.ToString()); // 0.83
-                        PrintLine(80, "EfficiencyBonus", epm.EfficiencyBonus.ToString()); // 1 if part if configured as smelter else 0 (=numbays)
-                        PrintLine(80, "EfficiencyMultiplier (=gov * _curMult)", epm.EfficiencyMultiplier.ToString()); // 0 when inactive . 0.5 when active  and 15/30 machinery. display is "50% load". 1/100% when full
-                        PrintLine(100, "Governor", epm.Governor.ToString());
-                        PrintResourceList("reqList", epm.reqList);
-                        PrintLine(80, "Resources");
-                        foreach (var res in ep.Resources)
+                        continue;
+                    }
+                    if (!epm.IsActivated)
+                    {
+                        continue;
+                    }
+                    PrintLine(80, String.Format("Active {0} in {1}", epm.ConverterName, ep.name));
+                    var totEff = 1d;
+                    PrintLine(100, String.Format("Governor {0:0.##}", epm.Governor));
+                    totEff *= epm.Governor;
+                    if (epm.UseSpecialistBonus)
+                    {
+                        SpecialistBonusExplanation specBonus = new SpecialistBonusExplanation(
+                                                                   epm.SpecialistBonusBase,
+                                                                   epm.SpecialistEfficiencyFactor,
+                                                                   epm.ExperienceEffect,
+                                                                   bestCrewSkillLevels);
+                        PrintLine(100, String.Format("Crew bonus {0:0.##} ({1})", epm.GetCrewBonus(), specBonus.Explain()));
+                        totEff *= epm.GetCrewBonus();
+                    }
+                    if (epm.reqList != null)
+                    {
+                        foreach (var res in epm.reqList)
                         {
-                            PrintLine(100, String.Format("{0}: {1}/{2}", res.resourceName, res.amount, res.maxAmount));
+                            var amountInPart = ep.Resources[res.ResourceName].amount;
+                            var bonus = amountInPart / res.Ratio;
+                            PrintLine(100, String.Format("{0} {1:0.##} ({2:0.##}/{3:0.##})", res.ResourceName, bonus, amountInPart, res.Ratio));
+                            totEff *= bonus;
                         }
                     }
+                    PrintLine(100, String.Format("Geology bonus {0:0.##}", geoBonus));
+                    totEff *= geoBonus * geoBonus;
+                    PrintLine(100, String.Format("Total efficiency = geo*geo*resource_ratio*gov*skill= {0:0.##} (game reports {1:0.##})", totEff, epm.EfficiencyMultiplier));
+                    PrintLine(100, "eMultiplier", epm.eMultiplier.ToString()); // 0.83
+                    PrintLine(100, String.Format("Total contribution {0:0.##}", epm.eMultiplier * totEff));
+                    effPartsContributions += epm.eMultiplier * totEff;
+                    /*
+                    PrintLine(110, "epm BonusList");
+                    foreach (var b in epm.BonusList) // 
+                    {
+                        PrintLine(120, b.Key + ": " + b.Value.ToString());
+                    }*/
                 }
-                // TODO dont display efficiency modules  as converters
+            }
+
+            // TOFIX kolony instead of vessel
+            var convertersContribution = 0f;
+            foreach (var convMks in vessel.FindPartModulesImplementing<MKSModule>())
+            {
+                var convs = convMks.part.FindModulesImplementing<BaseConverter>();
+                foreach (var conv in convs)
+                {
+                    if (!conv.IsActivated)
+                        continue;
+                    // TODO fix in MKS : weigh by "EfficiencyMultiplier" ? (or just num bays)
+                    if (convMks.eTag == mksModule.eTag)
+                    {
+                        PrintLine(80, String.Format("User of [{0}] {1}", mksModule.eTag, convMks.name));
+                        PrintLine(100, "eMultiplier", convMks.eMultiplier.ToString()); // 13.144
+                        convertersContribution += convMks.eMultiplier;
+                    }
+                }
+            }
+
+            var effPartsBonus = 1d + (effPartsContributions / convertersContribution);
+            PrintLine(60, String.Format("Efficiency parts bonus {0:0.##}", effPartsBonus));
+
+            return effPartsBonus;
+        
+        }
 
                 // Generic remarks
                 // PostProcess result.TimeFactor/deltaTime seems to be the req res ratio ex 0.5 for 15/30 machinery. iow: result.TimeFactor = req_res_ratio * deltaTime
@@ -118,7 +236,17 @@ namespace Explainer
                 // to give +200% geo: need 400 000 000 research
                 // to give +500% geo: need 2 500 000 000 research
 
-
+                // test giving 50% geo, 20% bota, 10% kolo 
+                // 2metal bays, no eff: 337.50% load , MKS bonus 2.25   . kerb 1.25 * 2bays  * 60%mach => yes
+                // with smelter or crusher 384.39 (each says 225% load) . MKS bonus 2.562613 = geo*geo*(1+sum(eff emul)/sum(conv emul) = 2.25*(1+(x / 13.144)) .. x = 13.144 *( 2.562613/2.25 - 1) = 1,826215676 = 2.25 * 0.83
+                //    crusher mks bonus 2.25
+                // with smelter+crusher 431.28
+                //
+                // after fix
+                // 384.38 load with both
+                // 337.49 with just crusher
+                //  with just smelter
+                // with just smelter and another converter at 48/2000mach 7.22% load : 360.93% load, MKs bonus 2.406302 =? 2.25*(1+ ( 2.25*0.83 / 2*13.144 )
 
                 // actually
                 // skill RepBoost boosts kolonization research
@@ -138,18 +266,6 @@ namespace Explainer
                 // 159 = 60% * GetEfficiencyMultiplier
 
                 // 0.83 / 13.144 = 0.063146683
-            }
-
-
-            /*ExplainHarvester(
-                ResourceCache.GetAbundance(harvester.ResourceName, vessel),
-                numBays,
-                harvester.GetCoreTemperature(),
-                harvester.ThermalEfficiency.maxTime,
-                harvester.ThermalEfficiency.Evaluate((float)harvester.GetCoreTemperature()),
-                harvester.Efficiency,
-                specBonus);*/
-        }
 
         private static void PrintResourceList(string label, List<ResourceRatio> list)
         {

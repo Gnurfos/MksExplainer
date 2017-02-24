@@ -128,7 +128,7 @@ namespace Explainer
                     }
                 }
             }
-
+            /*
             PrintLine("Best skills: ");
             foreach (var item in GetBestCrewSkillLevels(vessel).skillLevelNames)
             {
@@ -136,7 +136,7 @@ namespace Explainer
                 var best = item.Value;
                 var knames = string.Join(", ", best.kerbals.ToArray());
                 PrintLine(skill + ": Level " + best.level.ToString() + " (" + knames + ")", 50);
-            }
+            }*/
         }
 
         private BestCrewSkillLevels GetBestCrewSkillLevels(Vessel vessel)
