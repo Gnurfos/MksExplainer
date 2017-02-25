@@ -106,7 +106,8 @@ namespace Explainer
             var mksModule = part.FindModuleImplementing<MKSModule>();
 
             // TOFIX kolony instead of vessel
-            var effPartsContributions = 0d;
+            List<double> effPartsContributions = new List<double>();
+
             foreach (var epm in vessel.FindPartModulesImplementing<ModuleEfficiencyPart>())
             {
                 var ep = epm.part;
@@ -149,12 +150,12 @@ namespace Explainer
                     PrintLine(100, String.Format("Total efficiency = geo*geo*resource_ratio*gov*skill = {0:0.##}", totEff));
                     PrintLine(100, "eMultiplier", epm.eMultiplier.ToString()); // 0.83
                     PrintLine(100, String.Format("Total contribution {0:0.##}", epm.eMultiplier * totEff));
-                    effPartsContributions += epm.eMultiplier * totEff;
+                    effPartsContributions.Add(epm.eMultiplier * totEff);
                 }
             }
 
             // TOFIX kolony instead of vessel
-            var convertersContribution = 0f;
+            List<float> convertersContribution = new List<float>();
             foreach (var convMks in vessel.FindPartModulesImplementing<MKSModule>())
             {
                 var convs = convMks.part.FindModulesImplementing<BaseConverter>();
@@ -167,14 +168,27 @@ namespace Explainer
                     {
                         PrintLine(80, String.Format("User of [{0}] {1}", mksModule.eTag, convMks.name));
                         PrintLine(100, "eMultiplier", convMks.eMultiplier.ToString()); // 13.144
-                        convertersContribution += convMks.eMultiplier;
+                        convertersContribution.Add(convMks.eMultiplier);
                     }
                 }
             }
 
-            var effPartsBonus = 1d + (effPartsContributions / convertersContribution);
-            PrintLine(60, String.Format("Efficiency parts bonus {0:0.##}", effPartsBonus));
-
+            var num = effPartsContributions.Sum();
+            var numStr = String.Join(" + ", effPartsContributions.Select(x => String.Format("{0:0.##}", x)).ToArray());
+            var den = convertersContribution.Sum();
+            var denStr = String.Join(" + ", convertersContribution.Select(x => String.Format("{0:0.##}", x)).ToArray());
+            if (num < float.Epsilon)
+            {
+                PrintLine(60, "No active efficiency parts");
+                return 1d;
+            }
+            if (den < float.Epsilon)
+            {
+                PrintLine(60, "ERROR: no active converter found");
+                return 1d;
+            }
+            var effPartsBonus = 1d + (num / den);
+            PrintLine(60, String.Format("Efficiency parts bonus {0:0.##} = ({1}) / ({2})", effPartsBonus, numStr, denStr));
             return effPartsBonus;
         
         }
