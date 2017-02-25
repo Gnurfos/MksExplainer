@@ -18,6 +18,8 @@ namespace Explainer
     {
         private static GUIStyle _labelStyle = new GUIStyle(HighLogic.Skin.label);
 
+        private static bool kEffPartsUseMksBonus = false; // Depends on MKS version
+
         public static void DisplayConverterModule(ModuleResourceConverter_USI converter, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels)
         {
             var numBays = converter.BonusList["SwapBay"];
@@ -150,9 +152,16 @@ namespace Explainer
                             totEff *= bonus;
                         }
                     }
-                    PrintLine(100, String.Format("Geology bonus {0:0.##}", geoBonus));
-                    totEff *= geoBonus * geoBonus;
-                    PrintLine(100, String.Format("Total efficiency = geo*geo*resource_ratio*gov*skill = {0:0.##}", totEff));
+                    if (kEffPartsUseMksBonus)
+                    {
+                        PrintLine(100, String.Format("Geology bonus {0:0.##}", geoBonus));
+                        totEff *= geoBonus * geoBonus;
+                        PrintLine(100, String.Format("Total efficiency = geo*geo*resource_ratio*gov*skill = {0:0.##}", totEff));
+                    }
+                    else
+                    {
+                        PrintLine(100, String.Format("Total efficiency = resource_ratio*gov*skill = {0:0.##}", totEff));
+                    }
                     PrintLine(100, String.Format("eMultiplier {0}", epm.eMultiplier)); // 0.83
                     PrintLine(100, String.Format("Total contribution {0:0.##}", epm.eMultiplier * totEff));
                     effPartsContributions.Add(epm.eMultiplier * totEff);
