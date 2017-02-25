@@ -68,10 +68,15 @@ namespace Explainer
             if (part.FindModuleImplementing<MKSModule>() != null)
             {
                 // MKSModule == efficiency parts benefiter + kolonization bonuses benefiter
+                var mksModule = part.FindModuleImplementing<MKSModule>();
                 var geoBonus = KolonizationManager.GetGeologyResearchBonus(vessel.mainBody.flightGlobalsIndex);
-                var effPartsBonus = ExplainEffPartsBonus(converter, vessel, part, bestCrewSkillLevels, geoBonus);
                 PrintLine(60, String.Format("Geology bonus {0:0.##}", geoBonus));
-                var mksBonus = geoBonus * geoBonus * effPartsBonus;
+                double mksBonus = geoBonus * geoBonus;
+                if (mksModule.eTag != "")
+                {
+                    var effPartsBonus = ExplainEffPartsBonus(converter, mksModule.eTag, vessel, part, bestCrewSkillLevels, geoBonus);
+                    mksBonus *= effPartsBonus;
+                }
                 PrintLine(40, String.Format("MKS bonus (=geo*geo*effpartsbonus): {0:0.##})", mksBonus));
                 tot *= mksBonus;
             }
@@ -81,7 +86,7 @@ namespace Explainer
         }
 
 
-        private static double ExplainEffPartsBonus(ModuleResourceConverter_USI converter, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels, float geoBonus)
+        private static double ExplainEffPartsBonus(ModuleResourceConverter_USI converter, string converterETag, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels, float geoBonus)
         {    
 
             // MKSModule == efficiency parts benefiter + kolonization bonuses benefiter
@@ -103,7 +108,7 @@ namespace Explainer
              * ret 1 + _effPartTotal / _colonyConverterEff
              * */
 
-            var mksModule = part.FindModuleImplementing<MKSModule>();
+
 
             // TOFIX kolony instead of vessel
             List<double> effPartsContributions = new List<double>();
@@ -111,7 +116,7 @@ namespace Explainer
             foreach (var epm in vessel.FindPartModulesImplementing<ModuleEfficiencyPart>())
             {
                 var ep = epm.part;
-                if (epm.eTag == mksModule.eTag)
+                if (epm.eTag == converterETag)
                 {
                     if (epm.EfficiencyBonus < float.Epsilon)
                     {
@@ -148,7 +153,7 @@ namespace Explainer
                     PrintLine(100, String.Format("Geology bonus {0:0.##}", geoBonus));
                     totEff *= geoBonus * geoBonus;
                     PrintLine(100, String.Format("Total efficiency = geo*geo*resource_ratio*gov*skill = {0:0.##}", totEff));
-                    PrintLine(100, "eMultiplier", epm.eMultiplier.ToString()); // 0.83
+                    PrintLine(100, String.Format("eMultiplier {0}", epm.eMultiplier)); // 0.83
                     PrintLine(100, String.Format("Total contribution {0:0.##}", epm.eMultiplier * totEff));
                     effPartsContributions.Add(epm.eMultiplier * totEff);
                 }
@@ -163,11 +168,10 @@ namespace Explainer
                 {
                     if (!conv.IsActivated)
                         continue;
-                    // TODO fix in MKS : weigh by "EfficiencyMultiplier" ? (or just num bays)
-                    if (convMks.eTag == mksModule.eTag)
+                    if (convMks.eTag == converterETag)
                     {
-                        PrintLine(80, String.Format("User of [{0}] {1}", mksModule.eTag, convMks.name));
-                        PrintLine(100, "eMultiplier", convMks.eMultiplier.ToString()); // 13.144
+                        PrintLine(80, String.Format("User of [{0}] {1}", converterETag, convMks.name));
+                        PrintLine(100, String.Format("eMultiplier {0}", convMks.eMultiplier)); // 13.144
                         convertersContribution.Add(convMks.eMultiplier);
                     }
                 }
@@ -230,7 +234,7 @@ namespace Explainer
             }
         }
 
-        private static void PrintLine(int margin, string content, params string[] more)
+        private static void PrintLineM(int margin, string content, params string[] more)
         {
             GUILayout.BeginHorizontal();
             if (margin != 0)
@@ -239,6 +243,14 @@ namespace Explainer
             foreach (var item in more)
                 GUILayout.Label(item, _labelStyle, GUILayout.Width(150));
             GUILayout.EndHorizontal();
+        }
+
+        private static void PrintLine(int margin, string content)
+        {
+            GUILayout.BeginHorizontal();
+            if (margin != 0)
+                GUILayout.Label("", _labelStyle, GUILayout.Width(margin));
+            GUILayout.Label(content, _labelStyle, GUILayout.ExpandWidth(true));
         }
 
     }
