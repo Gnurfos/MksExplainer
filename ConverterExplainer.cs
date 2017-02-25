@@ -260,6 +260,7 @@ namespace Explainer
             if (margin != 0)
                 GUILayout.Label("", _labelStyle, GUILayout.Width(margin));
             GUILayout.Label(content, _labelStyle, GUILayout.ExpandWidth(true));
+            GUILayout.EndHorizontal();
         }
 
     }
