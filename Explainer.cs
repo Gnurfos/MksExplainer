@@ -14,16 +14,17 @@ namespace Explainer
 {
     /*
      * TODO color codes:
-     *  - term visible in game
+     *  - term visible in game popups
      *  - due to part settings
      *  - due to crew
      *  - due to environment (planetary abundance, part temp ...)
      *  - due to resource storage
      * 
      * TODO:
-     *  - converters explainer (with efficiency parts)
+     *  - kolony wide efficiency parts
      *  - recyclers explainer
-     *  - kolonization bonuses impact ?
+     *  - true kolonization bonuses impact, not always geo*geo
+     *  - kolonization bonuses for drills
      */
 
     [KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -39,6 +40,7 @@ namespace Explainer
         public static bool display = false;
 
         private BestCrewSkillLevels bestCrewSkillLevels;
+        private Part selectedPart;
 
         void Awake()
         {
@@ -75,7 +77,7 @@ namespace Explainer
 
         private void Ondraw()
         {
-            _windowPosition = GUILayout.Window(10, _windowPosition, OnWindow, "MKS Explainer", _windowStyle);
+            _windowPosition = GUILayout.Window(42, _windowPosition, OnWindow, "MKS Explainer", _windowStyle);
         }
 
         private void OnWindow(int windowId)
@@ -108,35 +110,75 @@ namespace Explainer
         private void Display()
         {
             var vessel = FlightGlobals.ActiveVessel;
-            foreach (var p in vessel.parts)
+            DisplayHeader(vessel);
+            if (selectedPart)
             {
-                if (p.FindModuleImplementing<ModuleResourceHarvester_USI>())
+                if (GUILayout.Button("Back"))
                 {
-                    PrintLine("Harvester: " + p.name);
-                    foreach (var m in p.FindModulesImplementing<ModuleResourceHarvester_USI>())
-                    {
-                        DrillsExplainer.DisplayHarvesterModule(m, vessel, p, GetBestCrewSkillLevels(vessel));
-                    }
+                    selectedPart = null;
                 }
+                DisplayPart(vessel, selectedPart);
+            }
+            else
+            {
+                DisplayPartList(vessel);
+            }
+        }
 
-                if (p.FindModuleImplementing<ModuleResourceConverter_USI>())
+        private void DisplayHeader(Vessel vessel)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Vessel: " + vessel.GetName(), _labelStyle, GUILayout.ExpandWidth(true));
+            GUILayout.EndHorizontal();
+        }
+
+        private class PartCounterByName
+        {
+            Dictionary<string, int> lastPartId = new Dictionary<string, int>();
+            public int next(string partName)
+            {
+                if (!lastPartId.ContainsKey(partName))
+                    lastPartId[partName] = 0;
+                return ++lastPartId[partName];
+            }
+        }
+
+        private void DisplayPartList(Vessel vessel)
+        {
+            var counter = new PartCounterByName();
+            foreach (var part in vessel.parts)
+            {
+                if (part.FindModuleImplementing<ModuleResourceHarvester_USI>()
+                    || part.FindModuleImplementing<ModuleResourceConverter_USI>())
                 {
-                    PrintLine("Converter: " + p.name);
-                    foreach (var m in p.FindModulesImplementing<ModuleResourceConverter_USI>())
+                    var label = String.Format("{0} #{1}", part.name, counter.next(part.name));
+                    if (GUILayout.Button(label))
                     {
-                        ConverterExplainer.DisplayConverterModule(m, vessel, p, GetBestCrewSkillLevels(vessel));
+                        selectedPart = part;
                     }
                 }
             }
-            /*
-            PrintLine("Best skills: ");
-            foreach (var item in GetBestCrewSkillLevels(vessel).skillLevelNames)
+        }
+
+        private void DisplayPart(Vessel vessel, Part part)
+        {
+            if (part.FindModuleImplementing<ModuleResourceHarvester_USI>())
             {
-                var skill = item.Key;
-                var best = item.Value;
-                var knames = string.Join(", ", best.kerbals.ToArray());
-                PrintLine(skill + ": Level " + best.level.ToString() + " (" + knames + ")", 50);
-            }*/
+                PrintLine("Harvesters: ");
+                foreach (var mod in part.FindModulesImplementing<ModuleResourceHarvester_USI>())
+                {
+                    DrillsExplainer.DisplayHarvesterModule(mod, vessel, part, GetBestCrewSkillLevels(vessel));
+                }
+            }
+
+            if (part.FindModuleImplementing<ModuleResourceConverter_USI>())
+            {
+                PrintLine("Converters: " + part.name);
+                foreach (var mod in part.FindModulesImplementing<ModuleResourceConverter_USI>())
+                {
+                    ConverterExplainer.DisplayConverterModule(mod, vessel, part, GetBestCrewSkillLevels(vessel));
+                }
+            }
         }
 
         private BestCrewSkillLevels GetBestCrewSkillLevels(Vessel vessel)
@@ -184,3 +226,32 @@ namespace Explainer
 
     }
 }
+
+// Generic remarks
+// PostProcess result.TimeFactor/deltaTime seems to be the req res ratio ex 0.5 for 15/30 machinery. iow: result.TimeFactor = req_res_ratio * deltaTime
+// geo bonus = sum(researches) -> sqrt -> divide by settings EfficiencyMultiplier (10000) -> add settings starting (1)
+
+// to give +10% geo: need 1 000 000 research
+// to give +20% geo: need 4 000 000 research
+// to give +50% geo: need 25 000 000 research
+// to give +100% geo: need 100 000 000 research
+// to give +200% geo: need 400 000 000 research
+// to give +500% geo: need 2 500 000 000 research
+
+// test giving 50% geo, 20% bota, 10% kolo 
+// 2metal bays, no eff: 337.50% load , MKS bonus 2.25   . kerb 1.25 * 2bays  * 60%mach => yes
+// with smelter or crusher 384.39 (each says 225% load) . MKS bonus 2.562613 = geo*geo*(1+sum(eff emul)/sum(conv emul) = 2.25*(1+(x / 13.144)) .. x = 13.144 *( 2.562613/2.25 - 1) = 1,826215676 = 2.25 * 0.83
+//    crusher mks bonus 2.25
+// with smelter+crusher 431.28
+//
+// after fix
+// 384.38 load with both
+// 337.49 with just crusher
+//  with just smelter
+// with just smelter and another converter at 48/2000mach 7.22% load : 360.93% load, MKs bonus 2.406302 =? 2.25*(1+ ( 2.25*0.83 / 2*13.144 )
+
+// actually
+// skill RepBoost boosts kolonization research
+// skill FundsBoost boosts geology research
+// skill ScienceBoost boosts science research
+
