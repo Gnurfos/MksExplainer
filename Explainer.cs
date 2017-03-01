@@ -31,24 +31,36 @@ namespace Explainer
     public class ExplainerGui : MonoBehaviour
     {
         private ApplicationLauncherButton launcherButton;
+        private static Texture2D resizeTexture;
+        private static GUIContent resizeContent;
+        private Rect _resizePosition;
+        private GUIStyle _resizeStyle;
+        private bool _resizePushed;
+
         private Rect _windowPosition = new Rect(300, 60, 820, 400);
-        private GUIStyle _windowStyle;
+
         private GUIStyle _labelStyle;
         private GUIStyle _scrollStyle;
         private Vector2 scrollPos = Vector2.zero;
         private bool _hasInitStyles = false;
         public static bool display = false;
 
+
         private BestCrewSkillLevels bestCrewSkillLevels;
         private Part selectedPart;
 
         void Awake()
         {
-            var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
-            var textureFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Icon.png");
-            texture.LoadImage(File.ReadAllBytes(textureFile));
+            var resizeIconFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resize.png");
+            resizeTexture = new Texture2D(16, 16, TextureFormat.ARGB32, false);
+            resizeTexture.LoadImage(File.ReadAllBytes(resizeIconFile));
+            resizeContent = new GUIContent(resizeTexture, "Resize");
+
+            var launcherIconTexture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
+            var launcherIconFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Icon.png");
+            launcherIconTexture.LoadImage(File.ReadAllBytes(launcherIconFile));
             launcherButton = ApplicationLauncher.Instance.AddModApplication(GuiOn, GuiOff, null, null, null, null,
-                ApplicationLauncher.AppScenes.FLIGHT, texture);
+                ApplicationLauncher.AppScenes.FLIGHT, launcherIconTexture);
         }
 
         private void GuiOn()
@@ -77,7 +89,8 @@ namespace Explainer
 
         private void Ondraw()
         {
-            _windowPosition = GUILayout.Window(42, _windowPosition, OnWindow, "MKS Explainer", _windowStyle);
+            _windowPosition = GUILayout.Window(42, _windowPosition, OnWindow, "MKS Explainer",
+                GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true), GUILayout.MinWidth(820), GUILayout.MinHeight(400));
         }
 
         private void OnWindow(int windowId)
@@ -88,7 +101,7 @@ namespace Explainer
         private void GenerateWindow()
         {
             GUILayout.BeginVertical();
-            scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(800), GUILayout.Height(350));
+            scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle);
             GUILayout.BeginVertical();
             try
             {
@@ -103,6 +116,7 @@ namespace Explainer
                 GUILayout.EndVertical();
                 GUILayout.EndScrollView();
                 GUILayout.EndVertical();
+                DrawAndHandleResize();
                 GUI.DragWindow();
             }
         }
@@ -123,6 +137,42 @@ namespace Explainer
             {
                 DisplayPartList(vessel);
             }
+        }
+
+        private void DrawAndHandleResize()
+        {
+            GUILayout.Space(24);
+            _resizePosition = new Rect(_windowPosition.width - 21, _windowPosition.height - 22, 16, 16);
+            GUI.Label(_resizePosition, resizeContent, _resizeStyle);
+            if (Event.current == null || Event.current.type == EventType.Layout)
+                return;
+            if (!_resizePushed)
+            {
+                if (Event.current.type == EventType.MouseDown
+                    && Event.current.button == 0
+                    && _resizePosition.Contains(Event.current.mousePosition))
+                {
+                    _resizePushed = true;
+                    Event.current.Use();
+                }
+            }
+            else
+            {
+                if (Input.GetMouseButton(0))
+                {
+                    ResizeTo(Input.mousePosition);
+                }
+                else
+                {
+                    _resizePushed = false;
+                }
+            }
+        }
+
+        private void ResizeTo(Vector3 screenMousePos)
+        {
+            _windowPosition.width = Mathf.Clamp(screenMousePos.x - _windowPosition.x + _resizePosition.width / 2, 50, Screen.width - _windowPosition.x);
+            _windowPosition.height = Mathf.Clamp(Screen.height - screenMousePos.y - _windowPosition.y + _resizePosition.height / 2, 50, Screen.height - _windowPosition.y);
         }
 
         private void DisplayHeader(Vessel vessel)
@@ -216,11 +266,18 @@ namespace Explainer
 
         private void InitStyles()
         {
-            _windowStyle = new GUIStyle(HighLogic.Skin.window);
-            _windowStyle.fixedWidth = 820f;
-            _windowStyle.fixedHeight = 400f;
             _labelStyle = new GUIStyle(HighLogic.Skin.label);
             _scrollStyle = new GUIStyle(HighLogic.Skin.scrollView);
+            _resizeStyle = new GUIStyle(HighLogic.Skin.button)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fixedWidth = 20,
+                fixedHeight = 20,
+                fontSize = 14,
+                fontStyle = FontStyle.Normal,
+                padding = new RectOffset() { left = 3, right = 3, top = 3, bottom = 3 } 
+            };
+            _resizePosition = new Rect(_windowPosition.width - 21, _windowPosition.height - 22, 16, 16);
             _hasInitStyles = true;
         }
 
