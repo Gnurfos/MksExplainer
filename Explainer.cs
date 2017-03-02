@@ -21,8 +21,8 @@ namespace Explainer
      *  - due to resource storage
      * 
      * TODO:
-     *  - kolony wide efficiency parts
      *  - recyclers explainer
+     * once MKS is updated:
      *  - true kolonization bonuses impact, not always geo*geo
      *  - kolonization bonuses for drills
      */
@@ -125,7 +125,7 @@ namespace Explainer
         {
             var vessel = FlightGlobals.ActiveVessel;
             DisplayHeader(vessel);
-            if (selectedPart)
+            if (selectedPart && selectedPart.vessel == vessel)
             {
                 if (GUILayout.Button("Back"))
                 {

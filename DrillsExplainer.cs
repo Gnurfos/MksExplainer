@@ -73,7 +73,7 @@ namespace Explainer
             {
                 PrintLine(50, "Specialist bonus", String.Format("{0:0.##}", specialistBonus.GetValue()), specialistBonus.Explain());
                 load = thermalEfficiency * specialistBonus.GetValue() * numBays;
-                PrintLine(50, " -> \"load\"",  String.Format("{0:0.##}%", load * 100), "ThermalEfficiency * SpecialistBonus * NumBays");
+                PrintLine(50, " -> \"load\"",  String.Format("{0:0.##}%", load * 100), "ThermalEfficiency * SpecialistBonus * Drillheads");
             }
             else
             {

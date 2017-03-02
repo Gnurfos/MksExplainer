@@ -39,6 +39,7 @@ namespace Explainer
             PrintLine(20, converter.ConverterName + ": Activated");
 
             var tot = 1d;
+            var totFactorsExplanation = new List<string>();
 
             if (converter.UseSpecialistBonus)
             {
@@ -49,11 +50,13 @@ namespace Explainer
                                                            bestCrewSkillLevels);
                 PrintLine(40, "Specialist bonus", String.Format("{0:0.##}", converter.GetCrewBonus()), specBonus.Explain());
                 tot *= converter.GetCrewBonus();
+                totFactorsExplanation.Add("spec_bonus");
             }
             if (numBays > 1 + float.Epsilon)
             {
                 PrintLine(40, "Bays", String.Format("{0}", numBays));
                 tot *= numBays;
+                totFactorsExplanation.Add("num_bays");
             }
 
             if (converter.reqList != null)
@@ -65,6 +68,7 @@ namespace Explainer
                     PrintLine(40, res.ResourceName, String.Format("{0:0.##}", bonus), String.Format("{0:0.##}/{1:0.##}", amountInPart, res.Ratio));
                     tot *= bonus;
                 }
+                totFactorsExplanation.Add("req_resource");
             }
 
             if (part.FindModuleImplementing<MKSModule>() != null)
@@ -74,13 +78,18 @@ namespace Explainer
                 var geoBonus = KolonizationManager.GetGeologyResearchBonus(vessel.mainBody.flightGlobalsIndex);
                 PrintLine(40, "Geology bonus", String.Format("{0:0.##}", geoBonus));
                 tot *= geoBonus * geoBonus;
+                totFactorsExplanation.Add("geo_bonus");
+                totFactorsExplanation.Add("geo_bonus");
                 if (mksModule.eTag != "")
                 {
                     var effPartsBonus = ExplainEffPartsBonus(converter, mksModule.eTag, vessel, part, bestCrewSkillLevels, geoBonus);
                     tot *= effPartsBonus;
+                    if (Math.Abs(effPartsBonus - 1d) > double.Epsilon)
+                        totFactorsExplanation.Add("eff_parts_bonus");
                 }
             }
-            PrintLine(40, " -> Total load", String.Format("{0:0.##}", tot));
+            var totExplanation = String.Join(" * ", totFactorsExplanation.ToArray());
+            PrintLine(40, " -> Total load", String.Format("{0:0.##%}", tot), totExplanation);
             PrintResourceRates(60, tot, converter);
         }
 
@@ -109,56 +118,24 @@ namespace Explainer
 
             PrintLine(40, "Efficiency parts");
 
-
-            // TOFIX kolony instead of vessel
             List<double> effPartsContributions = new List<double>();
 
-            foreach (var epm in vessel.FindPartModulesImplementing<ModuleEfficiencyPart>())
-            {
-                var ep = epm.part;
-                if (epm.eTag == converterETag)
+            foreach (var effPartVessel in GetKolonyVessels(vessel))
+                foreach (var epm in effPartVessel.vessel.FindPartModulesImplementing<ModuleEfficiencyPart>())
                 {
-                    if (epm.EfficiencyBonus < float.Epsilon)
+                    var ep = epm.part;
+                    if (epm.eTag == converterETag)
                     {
-                        continue;
-                    }
-                    if (!epm.IsActivated)
-                    {
-                        continue;
-                    }
-                    PrintLine(60, String.Format("Active {0} in {1}", epm.ConverterName, ep.name));
-                    var totEff = 1d;
-                    PrintLine(80, "Governor", String.Format("{0:0.##}", epm.Governor));
-                    totEff *= epm.Governor;
-                    if (epm.UseSpecialistBonus)
-                    {
-                        SpecialistBonusExplanation specBonus = new SpecialistBonusExplanation(
-                                                                   epm.SpecialistBonusBase,
-                                                                   epm.SpecialistEfficiencyFactor,
-                                                                   epm.ExperienceEffect,
-                                                                   bestCrewSkillLevels);
-                        PrintLine(80, "Crew bonus", String.Format("{0:0.##}", epm.GetCrewBonus()), specBonus.Explain());
-                        totEff *= epm.GetCrewBonus();
-                    }
-                    if (epm.reqList != null)
-                    {
-                        foreach (var res in epm.reqList)
+                        if (epm.EfficiencyBonus < float.Epsilon)
                         {
-                            var amountInPart = ep.Resources[res.ResourceName].amount;
-                            var bonus = amountInPart / res.Ratio;
-                            PrintLine(80, res.ResourceName, String.Format("{0:0.##}", bonus), String.Format("{0:0.##}/{1:0.##}", amountInPart, res.Ratio));
-                            totEff *= bonus;
+                            continue;
                         }
+                        if (!epm.IsActivated)
+                        {
+                            continue;
+                        }
+                        effPartsContributions.Add(GetEffPartContribution(ep, epm, bestCrewSkillLevels, geoBonus, effPartVessel));
                     }
-                    if (kEffPartsUseMksBonus)
-                    {
-                        PrintLine(80, "Geology bonus", String.Format("{0:0.##}", geoBonus));
-                        totEff *= geoBonus * geoBonus;
-                    }
-                    PrintLine(80, "eMultiplier", String.Format("{0}", epm.eMultiplier)); // 0.83
-                    PrintLine(80, " -> Total contribution", String.Format("{0:0.##}", epm.eMultiplier * totEff));
-                    effPartsContributions.Add(epm.eMultiplier * totEff);
-                }
             }
             var numerator = effPartsContributions.Sum();
             var numeratorStr = PrintSum(effPartsContributions);
@@ -168,23 +145,23 @@ namespace Explainer
                 return 1d;
             }
 
-            // TOFIX kolony instead of vessel
             List<double> convertersContribution = new List<double>();
-            foreach (var convMks in vessel.FindPartModulesImplementing<MKSModule>())
-            {
-                var convs = convMks.part.FindModulesImplementing<BaseConverter>();
-                foreach (var conv in convs)
+            foreach (var effPartVessel in GetKolonyVessels(vessel))
+                foreach (var convMks in effPartVessel.vessel.FindPartModulesImplementing<MKSModule>())
                 {
-                    if (!conv.IsActivated)
-                        continue;
-                    if (convMks.eTag == converterETag)
+                    var convs = convMks.part.FindModulesImplementing<BaseConverter>();
+                    foreach (var conv in convs)
                     {
-                        PrintLine(60, String.Format("User of [{0}] {1}", converterETag, convMks.name));
-                        PrintLine(80, "eMultiplier", String.Format("{0}", convMks.eMultiplier)); // 13.144
-                        convertersContribution.Add(convMks.eMultiplier);
+                        if (!conv.IsActivated)
+                            continue;
+                        if (convMks.eTag == converterETag)
+                        {
+                            PrintLine(60, String.Format("User of [{0}] {1}{2}", converterETag, convMks.name, effPartVessel.ExplainOther()));
+                            PrintLine(80, "eMultiplier", String.Format("{0}", convMks.eMultiplier)); // 13.144
+                            convertersContribution.Add(convMks.eMultiplier);
+                        }
                     }
                 }
-            }
             var denominator = convertersContribution.Sum();
             var denominatorStr = PrintSum(convertersContribution);
             if (denominator < float.Epsilon)
@@ -196,6 +173,79 @@ namespace Explainer
             PrintLine(40, "Efficiency parts bonus", String.Format("{0:0.##}", effPartsBonus), String.Format("1 + {0} / {1}", numeratorStr, denominatorStr));
             return effPartsBonus;
         
+        }
+
+        private static double GetEffPartContribution(Part ep, ModuleEfficiencyPart epm, BestCrewSkillLevels bestCrewSkillLevels, float geoBonus, KolonyVessel effPartVessel)
+        {
+            var otherVesselExplanation = effPartVessel.ExplainOther();
+            PrintLine(60, String.Format("Active {0} in {1}{2}", epm.ConverterName, ep.name, otherVesselExplanation));
+            var totEff = 1d;
+            PrintLine(80, "Governor", String.Format("{0:0.##}", epm.Governor));
+            totEff *= epm.Governor;
+            if (epm.UseSpecialistBonus)
+            {
+                SpecialistBonusExplanation specBonus = new SpecialistBonusExplanation(
+                    epm.SpecialistBonusBase,
+                    epm.SpecialistEfficiencyFactor,
+                    epm.ExperienceEffect,
+                    bestCrewSkillLevels);
+                PrintLine(80, "Crew bonus", String.Format("{0:0.##}", epm.GetCrewBonus()), specBonus.Explain());
+                totEff *= epm.GetCrewBonus();
+            }
+            if (epm.reqList != null)
+            {
+                foreach (var res in epm.reqList)
+                {
+                    var amountInPart = ep.Resources[res.ResourceName].amount;
+                    var bonus = amountInPart / res.Ratio;
+                    PrintLine(80, res.ResourceName, String.Format("{0:0.##}", bonus), String.Format("{0:0.##}/{1:0.##}", amountInPart, res.Ratio));
+                    totEff *= bonus;
+                }
+            }
+            if (kEffPartsUseMksBonus)
+            {
+                PrintLine(80, "Geology bonus", String.Format("{0:0.##}", geoBonus));
+                totEff *= geoBonus * geoBonus;
+            }
+            PrintLine(80, "eMultiplier", String.Format("{0}", epm.eMultiplier)); // 0.83
+            PrintLine(80, " -> Total contribution", String.Format("{0:0.##}", epm.eMultiplier * totEff));
+            return epm.eMultiplier * totEff;
+        }
+
+        private struct KolonyVessel
+        {
+            public string name;
+            public Vessel vessel;
+            public bool thisVessel;
+            public double distance;
+            public string ExplainOther()
+            {
+                if (thisVessel) return "";
+                else return String.Format(" (in {0}, {1}m away)", name, distance);
+            }
+        }
+        private static List<KolonyVessel> GetKolonyVessels(Vessel thisVessel)
+        {
+            const int EFF_RANGE = 500;
+            List<KolonyVessel> res = new List<KolonyVessel>();
+            foreach (var v in LogisticsTools.GetNearbyVessels(EFF_RANGE, true, thisVessel, true))
+            {
+                KolonyVessel item = new KolonyVessel();
+                item.name = v.GetName();
+                item.vessel = v;
+                if (v == thisVessel)
+                {
+                    item.thisVessel = true;
+                }
+                else
+                {
+                    item.thisVessel = false;
+                    item.distance = LogisticsTools.GetRange(v, thisVessel);
+                }
+
+                res.Add(item);
+            }
+            return res;
         }
 
         private static string PrintSum(List<double> values)
@@ -220,12 +270,20 @@ namespace Explainer
         {
             foreach (var rr in converter.inputList)
             {
-                PrintLine(margin, rr.ResourceName, String.Format("-{0:0.####}/s", rr.Ratio * load));
+                PrintLine(margin, rr.ResourceName, String.Format("-{0}/s", FormatRate(rr.Ratio * load)));
             }
             foreach (var rr in converter.outputList)
             {
-                PrintLine(margin, rr.ResourceName, String.Format("+{0:0.####}/s", rr.Ratio * load));
+                PrintLine(margin, rr.ResourceName, String.Format("+{0}/s", FormatRate(rr.Ratio * load)));
             }
+        }
+
+        private static string FormatRate(double rate)
+        {
+            if (rate > 0.001)
+                return String.Format("+{0:0.####}/s", rate);
+            else
+                return String.Format("+{0:0.#######}/s", rate);
         }
 
         private static void PrintLine(int margin, string content)
