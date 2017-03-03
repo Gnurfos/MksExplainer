@@ -156,7 +156,7 @@ namespace Explainer
                             continue;
                         if (convMks.eTag == converterETag)
                         {
-                            PrintLine(60, String.Format("User of [{0}] {1}{2}", converterETag, convMks.name, effPartVessel.ExplainOther()));
+                            PrintLine(60, String.Format("User of [{0}] {1}{2}", converterETag, Misc.Name(convMks.part), effPartVessel.ExplainOther()));
                             PrintLine(80, "eMultiplier", String.Format("{0}", convMks.eMultiplier)); // 13.144
                             convertersContribution.Add(convMks.eMultiplier);
                         }
@@ -178,7 +178,7 @@ namespace Explainer
         private static double GetEffPartContribution(Part ep, ModuleEfficiencyPart epm, BestCrewSkillLevels bestCrewSkillLevels, float geoBonus, KolonyVessel effPartVessel)
         {
             var otherVesselExplanation = effPartVessel.ExplainOther();
-            PrintLine(60, String.Format("Active {0} in {1}{2}", epm.ConverterName, ep.name, otherVesselExplanation));
+            PrintLine(60, String.Format("Active {0} in {1}{2}", epm.ConverterName, Misc.Name(ep), otherVesselExplanation));
             var totEff = 1d;
             PrintLine(80, "Governor", String.Format("{0:0.##}", epm.Governor));
             totEff *= epm.Governor;
@@ -231,7 +231,7 @@ namespace Explainer
             foreach (var v in LogisticsTools.GetNearbyVessels(EFF_RANGE, true, thisVessel, true))
             {
                 KolonyVessel item = new KolonyVessel();
-                item.name = v.GetName();
+                item.name = Misc.Name(v);
                 item.vessel = v;
                 if (v == thisVessel)
                 {
@@ -281,9 +281,9 @@ namespace Explainer
         private static string FormatRate(double rate)
         {
             if (rate > 0.001)
-                return String.Format("+{0:0.####}/s", rate);
+                return String.Format("{0:0.####}", rate);
             else
-                return String.Format("+{0:0.#######}/s", rate);
+                return String.Format("{0:0.#######}", rate);
         }
 
         private static void PrintLine(int margin, string content)

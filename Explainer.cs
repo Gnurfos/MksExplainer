@@ -27,7 +27,44 @@ namespace Explainer
      *  - kolonization bonuses for drills
      */
 
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    [KSPScenario(ScenarioCreationOptions.AddToAllGames, GameScenes.SPACECENTER, GameScenes.EDITOR, GameScenes.FLIGHT, GameScenes.TRACKSTATION)]
+    public class ExplainerScenario : ScenarioModule
+    {
+        private static string CONFIG_NODE = "MKS_EXPLAINER";
+        public float windowX = 300;
+        public float windowY = 60;
+        public float windowW = 820;
+        public float windowH = 400;
+        public static ExplainerScenario Instance { get; private set; }
+        public ExplainerScenario()
+        {
+            Instance = this;
+        }
+        public override void OnLoad(ConfigNode gameNode)
+        {
+            base.OnLoad(gameNode);
+            if (gameNode.HasNode(CONFIG_NODE))
+            {
+                var node = gameNode.GetNode(CONFIG_NODE);
+                node.TryGetValue("GUI.x", ref windowX);
+                node.TryGetValue("GUI.y", ref windowY);
+                node.TryGetValue("GUI.w", ref windowW);
+                node.TryGetValue("GUI.h", ref windowH);
+            }
+        }
+
+        public override void OnSave(ConfigNode gameNode)
+        {
+            base.OnSave(gameNode);
+            var node = gameNode.HasNode(CONFIG_NODE) ? gameNode.GetNode(CONFIG_NODE) : gameNode.AddNode(CONFIG_NODE);
+            node.AddValue("GUI.x", windowX);
+            node.AddValue("GUI.y", windowY);
+            node.AddValue("GUI.w", windowW);
+            node.AddValue("GUI.h", windowH);
+        }
+    }
+
+    [KSPAddon(KSPAddon.Startup.Flight, true)]
     public class ExplainerGui : MonoBehaviour
     {
         private ApplicationLauncherButton launcherButton;
@@ -37,7 +74,7 @@ namespace Explainer
         private GUIStyle _resizeStyle;
         private bool _resizePushed;
 
-        private Rect _windowPosition = new Rect(300, 60, 820, 400);
+        private Rect _windowPosition = new Rect(ExplainerScenario.Instance.windowX, ExplainerScenario.Instance.windowY, ExplainerScenario.Instance.windowW, ExplainerScenario.Instance.windowH);
 
         private GUIStyle _labelStyle;
         private GUIStyle _scrollStyle;
@@ -70,6 +107,7 @@ namespace Explainer
 
         public void Start()
         {
+            DontDestroyOnLoad(this);
             if (!_hasInitStyles)
                 InitStyles();
         }
@@ -118,6 +156,10 @@ namespace Explainer
                 GUILayout.EndVertical();
                 DrawAndHandleResize();
                 GUI.DragWindow();
+                ExplainerScenario.Instance.windowX = _windowPosition.x;
+                ExplainerScenario.Instance.windowY = _windowPosition.y;
+                ExplainerScenario.Instance.windowW = _windowPosition.width;
+                ExplainerScenario.Instance.windowH = _windowPosition.height;
             }
         }
 
@@ -178,7 +220,7 @@ namespace Explainer
         private void DisplayHeader(Vessel vessel)
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Vessel: " + vessel.GetName(), _labelStyle, GUILayout.ExpandWidth(true));
+            GUILayout.Label("Vessel: " + Misc.Name(vessel), _labelStyle, GUILayout.ExpandWidth(true));
             GUILayout.EndHorizontal();
         }
 
@@ -201,7 +243,8 @@ namespace Explainer
                 if (part.FindModuleImplementing<ModuleResourceHarvester_USI>()
                     || part.FindModuleImplementing<ModuleResourceConverter_USI>())
                 {
-                    var label = String.Format("{0} #{1}", part.name, counter.next(part.name));
+                    var pName = Misc.Name(part);
+                    var label = String.Format("{0} #{1}", pName, counter.next(pName));
                     if (GUILayout.Button(label))
                     {
                         selectedPart = part;
@@ -223,7 +266,7 @@ namespace Explainer
 
             if (part.FindModuleImplementing<ModuleResourceConverter_USI>())
             {
-                PrintLine("Converters: " + part.name);
+                PrintLine("Converters: " + Misc.Name(part));
                 foreach (var mod in part.FindModulesImplementing<ModuleResourceConverter_USI>())
                 {
                     ConverterExplainer.DisplayConverterModule(mod, vessel, part, GetBestCrewSkillLevels(vessel));

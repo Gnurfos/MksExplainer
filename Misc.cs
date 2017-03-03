@@ -12,6 +12,21 @@ using USITools;
 
 namespace Explainer
 {
+    class Misc
+    {
+        // To stop wondering whether v.name or v.GetName() is the correct one
+        public static string Name(Vessel vessel)
+        {
+            return vessel.GetName();
+        }
+
+        // To fix root part having the vessel name appended for some reason
+        public static string Name(Part part)
+        {
+            var vesselName = Name(part.vessel);
+            return part.name.Replace(" (" + vesselName + ")", "");
+        }
+    }
 
     public class BestCrewSkillLevels
     {
