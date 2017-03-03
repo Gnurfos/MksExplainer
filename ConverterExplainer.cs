@@ -18,8 +18,6 @@ namespace Explainer
     {
         private static GUIStyle _labelStyle = new GUIStyle(HighLogic.Skin.label);
 
-        private static bool kEffPartsUseMksBonus = false; // Depends on MKS version
-
         public static void DisplayConverterModule(ModuleResourceConverter_USI converter, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels)
         {
             var numBays = converter.BonusList["SwapBay"];
@@ -202,7 +200,7 @@ namespace Explainer
                     totEff *= bonus;
                 }
             }
-            if (kEffPartsUseMksBonus)
+            if (Misc.kEffPartsUseMksBonus)
             {
                 PrintLine(80, "Geology bonus", String.Format("{0:0.##}", geoBonus));
                 totEff *= geoBonus * geoBonus;

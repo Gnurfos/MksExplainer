@@ -9,6 +9,7 @@ using System.Text;
 using KSP.UI.Screens;
 using UnityEngine;
 using USITools;
+using KolonyTools;
 
 namespace Explainer
 {
@@ -49,7 +50,8 @@ namespace Explainer
                 harvester.ThermalEfficiency.maxTime,
                 harvester.ThermalEfficiency.Evaluate((float)harvester.GetCoreTemperature()),
                 harvester.Efficiency,
-                specBonus);
+                specBonus,
+                vessel);
         }
 
         private static void ExplainHarvester(
@@ -59,7 +61,8 @@ namespace Explainer
             float maxTemp,
             float thermalEfficiency,
             float extractionAbundanceMultiplier,
-            SpecialistBonusExplanation specialistBonus)
+            SpecialistBonusExplanation specialistBonus,
+            Vessel vessel)
         {
             PrintLine(50, "Resource abundance at location", String.Format("{0}", locationResourceAbundance));
             PrintLine(50, "Harvester abundance multiplier", String.Format("\"{0}% base efficiency\"", extractionAbundanceMultiplier * 100));
@@ -68,18 +71,22 @@ namespace Explainer
             // PrintLine(50, "Max temperature", String.Format("{0:0.00}", maxTemp));
             PrintLine(50, " -> \"Thermal Efficiency\"", String.Format("{0}%", 100 * thermalEfficiency),  "(from some curves)");
             PrintLine(50, "Separators", numBays.ToString(), "(Drillheads)");
-            float load;
+            float load = thermalEfficiency * numBays;
+            var explanation = "ThermalEfficiency * Drillheads";
             if (specialistBonus != null)
             {
                 PrintLine(50, "Specialist bonus", String.Format("{0:0.##}", specialistBonus.GetValue()), specialistBonus.Explain());
-                load = thermalEfficiency * specialistBonus.GetValue() * numBays;
-                PrintLine(50, " -> \"load\"",  String.Format("{0:0.##}%", load * 100), "ThermalEfficiency * SpecialistBonus * Drillheads");
+                load *= specialistBonus.GetValue();
+                explanation += " * SpecialistBonus";
             }
-            else
+            if (Misc.kDrillsUseMksBonuses)
             {
-                load = thermalEfficiency * numBays;
-                PrintLine(50, " -> \"load\"",  String.Format("{0:0.##}%", load * 100), "ThermalEfficiency * NumBays");
+                var geoBonus = KolonizationManager.GetGeologyResearchBonus(vessel.mainBody.flightGlobalsIndex);
+                PrintLine(80, "Geology bonus", String.Format("{0:0.##}", geoBonus));
+                load *= geoBonus * geoBonus;
+                explanation += " * geoBonus * geoBonus";
             }
+            PrintLine(50, " -> \"load\"",  String.Format("{0:0.##}%", load * 100), explanation);
             PrintLine(50, " -> Actual obtention rate", String.Format("{0}/s", load * extractionAbundanceMultiplier * locationResourceAbundance), "Rate * load");
         }
 

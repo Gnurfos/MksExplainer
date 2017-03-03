@@ -26,6 +26,11 @@ namespace Explainer
             var vesselName = Name(part.vessel);
             return part.name.Replace(" (" + vesselName + ")", "");
         }
+
+        public static bool kEffPartsUseMksBonus = true; // Depends on MKS version. Should become false from 0.50.18+
+
+        public static bool kDrillsUseMksBonuses = true; // Depends on MKS version. Was false in 0.50.14. True in 0.50.17+
+
     }
 
     public class BestCrewSkillLevels

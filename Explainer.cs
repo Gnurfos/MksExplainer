@@ -122,6 +122,8 @@ namespace Explainer
         {
             if (!display)
                 return;
+            if (!HighLogic.LoadedSceneIsFlight)
+                return;
             Ondraw();
         }
 
