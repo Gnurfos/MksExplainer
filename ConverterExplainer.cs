@@ -154,7 +154,7 @@ namespace Explainer
                             continue;
                         if (convMks.eTag == converterETag)
                         {
-                            PrintLine(60, String.Format("User of [{0}] {1}{2}", converterETag, Misc.Name(convMks.part), effPartVessel.ExplainOther()));
+                            PrintLine(60, String.Format("User of [{0}] {1}/{2}{3}", converterETag, Misc.Name(convMks.part), conv.ConverterName, effPartVessel.ExplainOther()));
                             PrintLine(80, "eMultiplier", String.Format("{0}", convMks.eMultiplier)); // 13.144
                             convertersContribution.Add(convMks.eMultiplier);
                         }
@@ -219,7 +219,7 @@ namespace Explainer
             public string ExplainOther()
             {
                 if (thisVessel) return "";
-                else return String.Format(" (in {0}, {1}m away)", name, distance);
+                else return String.Format(" (in {0}, {1}m away)", name, (int) distance);
             }
         }
         private static List<KolonyVessel> GetKolonyVessels(Vessel thisVessel)
