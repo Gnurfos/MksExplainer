@@ -82,7 +82,7 @@ namespace Explainer
             if (Misc.kDrillsUseMksBonuses)
             {
                 var geoBonus = KolonizationManager.GetGeologyResearchBonus(vessel.mainBody.flightGlobalsIndex);
-                PrintLine(80, "Geology bonus", String.Format("{0:0.##}", geoBonus));
+                PrintLine(50, "Geology bonus", String.Format("{0:0.##}", geoBonus));
                 load *= geoBonus * geoBonus;
                 explanation += " * geoBonus * geoBonus";
             }
