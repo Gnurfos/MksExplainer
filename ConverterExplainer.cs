@@ -74,16 +74,42 @@ namespace Explainer
                 // MKSModule == efficiency parts benefiter + kolonization bonuses benefiter
                 var mksModule = part.FindModuleImplementing<MKSModule>();
                 var geoBonus = KolonizationManager.GetGeologyResearchBonus(vessel.mainBody.flightGlobalsIndex);
+                var koloBonus = KolonizationManager.GetKolonizationResearchBonus(vessel.mainBody.flightGlobalsIndex);
+                var botaBonus = KolonizationManager.GetBotanyResearchBonus(vessel.mainBody.flightGlobalsIndex);
                 PrintLine(40, "Geology bonus", String.Format("{0:0.##}", geoBonus));
-                tot *= geoBonus * geoBonus;
+                tot *= geoBonus;
                 totFactorsExplanation.Add("geo_bonus");
-                totFactorsExplanation.Add("geo_bonus");
+
+                if (mksModule.BonusEffect == "RepBoost")
+                {
+                    PrintLine(40, "Kolonization bonus", String.Format("{0:0.##}", koloBonus));
+                    tot *= koloBonus;
+                    totFactorsExplanation.Add("kolo_bonus");
+                }
+                else if (mksModule.BonusEffect == "ScienceBoost")
+                {
+                    PrintLine(40, "Botany bonus", String.Format("{0:0.##}", botaBonus));
+                    tot *= botaBonus;
+                    totFactorsExplanation.Add("bota_bonus");
+                }
+                else
+                {
+                    tot *= geoBonus;
+                    totFactorsExplanation.Add("geo_bonus");
+                }
                 if (mksModule.eTag != "")
                 {
                     var effPartsBonus = ExplainEffPartsBonus(converter, mksModule.eTag, vessel, part, bestCrewSkillLevels, geoBonus);
                     tot *= effPartsBonus;
                     if (Math.Abs(effPartsBonus - 1d) > double.Epsilon)
                         totFactorsExplanation.Add("eff_parts_bonus");
+                }
+                if (typeof(MKSModule).GetField("Governor") != null)
+                {
+                    var gov = (float) typeof(MKSModule).GetField("Governor").GetValue(mksModule);
+                    PrintLine(40, "Governor", String.Format("{0:0.##}", gov));
+                    tot *= gov;
+                    totFactorsExplanation.Add("governor");
                 }
             }
             var totExplanation = String.Join(" * ", totFactorsExplanation.ToArray());
@@ -178,8 +204,12 @@ namespace Explainer
             var otherVesselExplanation = effPartVessel.ExplainOther();
             PrintLine(60, String.Format("Active {0} in {1}{2}", epm.ConverterName, Misc.Name(ep), otherVesselExplanation));
             var totEff = 1d;
-            PrintLine(80, "Governor", String.Format("{0:0.##}", epm.Governor));
-            totEff *= epm.Governor;
+            if (typeof(ModuleEfficiencyPart).GetField("Governor") != null)
+            {
+                var gov = (float) typeof(ModuleEfficiencyPart).GetField("Governor").GetValue(epm);
+                PrintLine(80, "Governor", String.Format("{0:0.##}", gov));
+                totEff *= gov;
+            }
             if (epm.UseSpecialistBonus)
             {
                 SpecialistBonusExplanation specBonus = new SpecialistBonusExplanation(
