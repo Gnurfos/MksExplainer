@@ -11,13 +11,10 @@ using UnityEngine;
 using USITools;
 using KolonyTools;
 
-
 namespace Explainer
 {
-    public class ConverterExplainer
+    public class ConverterExplainer : GuiTools
     {
-        private static GUIStyle _labelStyle = new GUIStyle(HighLogic.Skin.label);
-
         public static void DisplayConverterModule(ModuleResourceConverter_USI converter, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels)
         {
             var numBays = converter.BonusList["SwapBay"];
@@ -293,48 +290,6 @@ namespace Explainer
                 PrintLine(100, String.Format("{0}: {1}/s", rr.ResourceName, rr.Ratio));
             }
         }
-
-        private static void PrintResourceRates(int margin, double load, ModuleResourceConverter_USI converter)
-        {
-            foreach (var rr in converter.inputList)
-            {
-                PrintLine(margin, rr.ResourceName, String.Format("-{0}/s", FormatRate(rr.Ratio * load)));
-            }
-            foreach (var rr in converter.outputList)
-            {
-                PrintLine(margin, rr.ResourceName, String.Format("+{0}/s", FormatRate(rr.Ratio * load)));
-            }
-        }
-
-        private static string FormatRate(double rate)
-        {
-            if (rate > 0.001)
-                return String.Format("{0:0.####}", rate);
-            else
-                return String.Format("{0:0.#######}", rate);
-        }
-
-        private static void PrintLine(int margin, string content)
-        {
-            GUILayout.BeginHorizontal();
-            if (margin != 0)
-                GUILayout.Label("", _labelStyle, GUILayout.Width(margin));
-            GUILayout.Label(content, _labelStyle, GUILayout.ExpandWidth(true));
-            GUILayout.EndHorizontal();
-        }
-
-        private static void PrintLine(int margin, string title, string value, string explanation="")
-        {
-            GUILayout.BeginHorizontal();
-            if (margin != 0)
-                GUILayout.Label("", _labelStyle, GUILayout.Width(margin));
-            GUILayout.Label(title, _labelStyle, GUILayout.Width(200));
-            GUILayout.Label(value, _labelStyle, GUILayout.Width(100));
-            GUILayout.Label(explanation, _labelStyle, GUILayout.ExpandWidth(true));
-            GUILayout.EndHorizontal();
-        }
-
-        // " -> \"Thermal Efficiency\" (from" = 200 width
 
     }
 }

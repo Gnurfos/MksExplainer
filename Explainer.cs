@@ -9,6 +9,7 @@ using System.Text;
 using KSP.UI.Screens;
 using UnityEngine;
 using USITools;
+using KolonyTools;
 
 namespace Explainer
 {
@@ -22,6 +23,7 @@ namespace Explainer
      * 
      * TODO:
      *  - recyclers explainer
+     *  - sifter: explain abundance values (sum for biomes with min)
      * once MKS is updated:
      *  - true kolonization bonuses impact, not always geo*geo
      *  - kolonization bonuses for drills
@@ -243,7 +245,8 @@ namespace Explainer
             foreach (var part in vessel.parts)
             {
                 if (part.FindModuleImplementing<ModuleResourceHarvester_USI>()
-                    || part.FindModuleImplementing<ModuleResourceConverter_USI>())
+                    || part.FindModuleImplementing<ModuleResourceConverter_USI>()
+                    || part.FindModuleImplementing<ModuleBulkConverter>())
                 {
                     var pName = Misc.Name(part);
                     var label = String.Format("{0} #{1}", pName, counter.next(pName));
@@ -272,6 +275,15 @@ namespace Explainer
                 foreach (var mod in part.FindModulesImplementing<ModuleResourceConverter_USI>())
                 {
                     ConverterExplainer.DisplayConverterModule(mod, vessel, part, GetBestCrewSkillLevels(vessel));
+                }
+            }
+
+            if (part.FindModuleImplementing<ModuleBulkConverter>())
+            {
+                PrintLine("Bulk Converters: " + Misc.Name(part));
+                foreach (var mod in part.FindModulesImplementing<ModuleBulkConverter>())
+                {
+                    BulkConverterExplainer.DisplayConverterModule(mod, vessel, part, GetBestCrewSkillLevels(vessel));
                 }
             }
         }
