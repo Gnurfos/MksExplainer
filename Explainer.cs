@@ -315,6 +315,7 @@ namespace Explainer
             if (lastInstance != null)
             {
                 lastInstance.selectedPart = part;
+                lastInstance.GuiOn();
             }
         }
 
