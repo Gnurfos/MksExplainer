@@ -239,9 +239,20 @@ namespace Explainer
             }
         }
 
+        private struct HighlightedPart
+        {
+            public Part part;
+            public bool wasActive;
+            public bool wasRecursive;
+            public Color previousColor;
+        }
+        private HighlightedPart highlightedPart = new HighlightedPart();
+        private static Color highlightColor = new Color(0f, 0.8f, 0.6f);
+
         private void DisplayPartList(Vessel vessel)
         {
             var counter = new PartCounterByName();
+            Part newHighligtedPart = null;
             foreach (var part in vessel.parts)
             {
                 if (part.FindModuleImplementing<ModuleResourceHarvester_USI>()
@@ -254,7 +265,36 @@ namespace Explainer
                     {
                         selectedPart = part;
                     }
+                    else
+                    {
+                        if (Event.current.type == EventType.Repaint && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+                        {
+                            newHighligtedPart = part;
+                        }
+                    }
                 }
+            }
+            highlightPartIfNeeded(newHighligtedPart);
+        }
+
+        private void highlightPartIfNeeded(Part newHighligtedPart)
+        {
+            if (highlightedPart.part != null && highlightedPart.part != newHighligtedPart)
+            {
+                // Restore previous part highlight
+                highlightedPart.part.SetHighlightColor(highlightedPart.previousColor);
+                highlightedPart.part.HighlightActive = highlightedPart.wasActive;
+                highlightedPart.part.RecurseHighlight = highlightedPart.wasRecursive;
+            }
+            if (newHighligtedPart != highlightedPart.part)
+            {
+                // Highlight new part
+                highlightedPart.part = newHighligtedPart;
+                highlightedPart.previousColor = newHighligtedPart.highlightColor;
+                highlightedPart.wasActive = newHighligtedPart.HighlightActive;
+                highlightedPart.wasRecursive = newHighligtedPart.RecurseHighlight;
+                newHighligtedPart.SetHighlightColor(highlightColor);
+                newHighligtedPart.SetHighlight(true, false);
             }
         }
 
