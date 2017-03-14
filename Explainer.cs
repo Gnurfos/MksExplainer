@@ -88,6 +88,12 @@ namespace Explainer
         private BestCrewSkillLevels bestCrewSkillLevels;
         private Part selectedPart;
 
+        private static ExplainerGui lastInstance;
+        public ExplainerGui()
+        {
+            lastInstance = this;
+        }
+
         void Awake()
         {
             var resizeIconFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resize.png");
@@ -177,7 +183,10 @@ namespace Explainer
                 {
                     selectedPart = null;
                 }
-                DisplayPart(vessel, selectedPart);
+                else
+                {
+                    DisplayPart(vessel, selectedPart);
+                }
             }
             else
             {
@@ -290,11 +299,22 @@ namespace Explainer
             {
                 // Highlight new part
                 highlightedPart.part = newHighligtedPart;
-                highlightedPart.previousColor = newHighligtedPart.highlightColor;
-                highlightedPart.wasActive = newHighligtedPart.HighlightActive;
-                highlightedPart.wasRecursive = newHighligtedPart.RecurseHighlight;
-                newHighligtedPart.SetHighlightColor(highlightColor);
-                newHighligtedPart.SetHighlight(true, false);
+                if (newHighligtedPart != null)
+                {
+                    highlightedPart.previousColor = newHighligtedPart.highlightColor;
+                    highlightedPart.wasActive = newHighligtedPart.HighlightActive;
+                    highlightedPart.wasRecursive = newHighligtedPart.RecurseHighlight;
+                    newHighligtedPart.SetHighlightColor(highlightColor);
+                    newHighligtedPart.SetHighlight(true, false);
+                }
+            }
+        }
+
+        public static void SelectPart(Part part)
+        {
+            if (lastInstance != null)
+            {
+                lastInstance.selectedPart = part;
             }
         }
 
