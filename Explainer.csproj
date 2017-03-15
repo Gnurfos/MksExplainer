@@ -65,14 +65,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Misc.cs" />
-    <Compile Include="Explainer.cs" />
-    <Compile Include="DrillsExplainer.cs" />
-    <Compile Include="ResourceCache.cs" />
-    <Compile Include="ConverterExplainer.cs" />
-    <Compile Include="BulkConverterExplainer.cs" />
-    <Compile Include="GuiTools.cs" />
-    <Compile Include="PartExplainerModule.cs" />
+    <Compile Include="src\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
