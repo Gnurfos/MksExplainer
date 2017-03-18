@@ -34,7 +34,11 @@ namespace Explainer
         {
             if (rate < double.Epsilon)
                 return "0";
-            if (rate > 0.001)
+            if (rate > 1000)
+                return String.Format("{0}", (int)rate);
+            if (rate > 1)
+                return String.Format("{0:0.#}", rate);
+            else if (rate > 0.001)
                 return String.Format("{0:0.####}", rate);
             else if (rate > 0.000001)
                 return String.Format("{0:0.#######}", rate);
@@ -52,13 +56,37 @@ namespace Explainer
         {
             foreach (var rr in inputList)
             {
-                PrintLine(margin, rr.ResourceName, String.Format("-{0}/s", FormatResourceRate(rr.Ratio * load)));
+                PrintSingleResourceRate(margin, rr.ResourceName, "-", rr.Ratio * load);
             }
             foreach (var rr in outputList)
             {
-                PrintLine(margin, rr.ResourceName, String.Format("+{0}/s", FormatResourceRate(rr.Ratio * load)));
+                PrintSingleResourceRate(margin, rr.ResourceName, "+", rr.Ratio * load);
             }
         }
 
+        protected static void PrintSingleResourceRate(int margin, string name, string sign, double rate)
+        {
+            GUILayout.BeginHorizontal();
+            if (margin != 0)
+                GUILayout.Label("", _labelStyle, GUILayout.Width(margin));
+            GUILayout.Label(name, _labelStyle, GUILayout.Width(200));
+            PrintRateLabel(sign, rate, "s");
+            PrintRateLabel(sign, rate * 3600, "h");
+            PrintRateLabel(sign, rate * 3600 * HoursPerDay(), "d");
+            PrintRateLabel(sign, rate * 3600 * HoursPerDay() * DaysPerYear(), "y");
+            GUILayout.EndHorizontal();
+        }
+        private static void PrintRateLabel(string sign, double rate, string timeScale)
+        {
+            GUILayout.Label(String.Format("{0}{1}/{2}", sign, FormatResourceRate(rate), timeScale), _labelStyle, GUILayout.Width(100));
+        }
+        private static int HoursPerDay()
+        {
+            return GameSettings.KERBIN_TIME ? 6 : 24;
+        }
+        private static int DaysPerYear()
+        {
+            return GameSettings.KERBIN_TIME ? 425 : 365;
+        }
     }
 }

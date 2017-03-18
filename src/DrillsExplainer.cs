@@ -14,10 +14,8 @@ using KolonyTools;
 namespace Explainer
 {
  
-    public class DrillsExplainer
+    public class DrillsExplainer : GuiTools
     {
-
-        private static GUIStyle _labelStyle = new GUIStyle(HighLogic.Skin.label);
 
         public static void DisplayHarvesterModule(ModuleResourceHarvester_USI harvester, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels)
         {
@@ -44,6 +42,7 @@ namespace Explainer
                 bestCrewSkillLevels) : null;
 
             ExplainHarvester(
+                harvester.ResourceName,
                 ResourceCache.GetAbundance(harvester.ResourceName, vessel),
                 numBays,
                 harvester.GetCoreTemperature(),
@@ -55,6 +54,7 @@ namespace Explainer
         }
 
         private static void ExplainHarvester(
+            string resourceName,
             float locationResourceAbundance,
             float numBays,
             double partTemperature,
@@ -87,29 +87,9 @@ namespace Explainer
                 explanation += " * geoBonus * geoBonus";
             }
             PrintLine(50, " -> \"load\"",  String.Format("{0:0.##}%", load * 100), explanation);
-            PrintLine(50, " -> Actual obtention rate", String.Format("{0}/s", load * extractionAbundanceMultiplier * locationResourceAbundance), "Rate * load");
+            PrintLine(50, " -> Actual obtention rate", String.Format("+{0}/s", FormatResourceRate(load * extractionAbundanceMultiplier * locationResourceAbundance)), "Rate * load");
+            PrintSingleResourceRate(60, resourceName, "+", load * extractionAbundanceMultiplier * locationResourceAbundance);
         }
-
-        private static void PrintLine(int margin, string content)
-        {
-            GUILayout.BeginHorizontal();
-            if (margin != 0)
-                GUILayout.Label("", _labelStyle, GUILayout.Width(margin));
-            GUILayout.Label(content, _labelStyle, GUILayout.ExpandWidth(true));
-            GUILayout.EndHorizontal();
-        }
-
-        private static void PrintLine(int margin, string title, string value, string explanation="")
-        {
-            GUILayout.BeginHorizontal();
-            if (margin != 0)
-                GUILayout.Label("", _labelStyle, GUILayout.Width(margin));
-            GUILayout.Label(title, _labelStyle, GUILayout.Width(200));
-            GUILayout.Label(value, _labelStyle, GUILayout.Width(150));
-            GUILayout.Label(explanation, _labelStyle, GUILayout.ExpandWidth(true));
-            GUILayout.EndHorizontal();
-        }
-
 
     }
 }
