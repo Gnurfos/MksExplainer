@@ -108,11 +108,6 @@ namespace Explainer
                 ApplicationLauncher.AppScenes.FLIGHT, launcherIconTexture);
         }
 
-        private void GuiOn()
-        {
-            display = true;
-        }
-
         public void Start()
         {
             DontDestroyOnLoad(this);
@@ -120,10 +115,27 @@ namespace Explainer
                 InitStyles();
         }
 
+        private void GuiOn()
+        {
+            ToggleDisplay();
+        }
+
         private void GuiOff()
         {
-            display = false;
-            bestCrewSkillLevels = null;
+            ToggleDisplay();
+        }
+
+        private void ToggleDisplay()
+        {
+            if (display)
+            {
+                display = false;
+                bestCrewSkillLevels = null;
+            }
+            else
+            {
+                display = true;
+            }
         }
 
         private void OnGUI()
@@ -315,7 +327,8 @@ namespace Explainer
             if (lastInstance != null)
             {
                 lastInstance.selectedPart = part;
-                lastInstance.GuiOn();
+                if (!display)
+                    display = true;
             }
         }
 
