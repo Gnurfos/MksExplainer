@@ -70,10 +70,10 @@ namespace Explainer
     public class ExplainerGui : MonoBehaviour
     {
         private ApplicationLauncherButton launcherButton;
-        private static Texture2D resizeTexture;
+        private static Texture2D resizeTexture, closeTexture;
         private static GUIContent resizeContent;
-        private Rect _resizePosition;
-        private GUIStyle _resizeStyle;
+        private Rect _resizePosition, _closePosition;
+        private GUIStyle _buttonsStyle;
         private bool _resizePushed;
 
         private Rect _windowPosition = new Rect(ExplainerScenario.Instance.windowX, ExplainerScenario.Instance.windowY, ExplainerScenario.Instance.windowW, ExplainerScenario.Instance.windowH);
@@ -100,6 +100,10 @@ namespace Explainer
             resizeTexture = new Texture2D(16, 16, TextureFormat.ARGB32, false);
             resizeTexture.LoadImage(File.ReadAllBytes(resizeIconFile));
             resizeContent = new GUIContent(resizeTexture, "Resize");
+
+            var closeIconFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Close.png");
+            closeTexture = new Texture2D(16, 16, TextureFormat.ARGB32, false);
+            closeTexture.LoadImage(File.ReadAllBytes(closeIconFile));
 
             var launcherIconTexture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
             var launcherIconFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Icon.png");
@@ -160,6 +164,11 @@ namespace Explainer
 
         private void GenerateWindow()
         {
+            _closePosition = new Rect(_windowPosition.width - 21, 1, 16, 16);
+            if (GUI.Button(_closePosition, closeTexture, _buttonsStyle))
+            {
+                ToggleDisplay();
+            }
             GUILayout.BeginVertical();
             scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle);
             GUILayout.BeginVertical();
@@ -210,7 +219,7 @@ namespace Explainer
         {
             GUILayout.Space(24);
             _resizePosition = new Rect(_windowPosition.width - 21, _windowPosition.height - 22, 16, 16);
-            GUI.Label(_resizePosition, resizeContent, _resizeStyle);
+            GUI.Label(_resizePosition, resizeContent, _buttonsStyle);
             if (Event.current == null || Event.current.type == EventType.Layout)
                 return;
             if (!_resizePushed)
@@ -399,7 +408,7 @@ namespace Explainer
         {
             _labelStyle = new GUIStyle(HighLogic.Skin.label);
             _scrollStyle = new GUIStyle(HighLogic.Skin.scrollView);
-            _resizeStyle = new GUIStyle(HighLogic.Skin.button)
+            _buttonsStyle = new GUIStyle(HighLogic.Skin.button)
             {
                 alignment = TextAnchor.MiddleCenter,
                 fixedWidth = 20,
@@ -409,6 +418,7 @@ namespace Explainer
                 padding = new RectOffset() { left = 3, right = 3, top = 3, bottom = 3 } 
             };
             _resizePosition = new Rect(_windowPosition.width - 21, _windowPosition.height - 22, 16, 16);
+            _closePosition = new Rect(_windowPosition.width - 21, 1, 16, 16);
             _hasInitStyles = true;
         }
 
