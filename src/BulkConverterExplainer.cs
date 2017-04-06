@@ -14,7 +14,7 @@ using KolonyTools;
 
 namespace Explainer
 {
-    public class BulkConverterExplainer : GuiTools
+    public class BulkConverterExplainer : BaseExplainer
     {
 
         public static void DisplayConverterModule(ModuleBulkConverter converter, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels)
@@ -41,17 +41,9 @@ namespace Explainer
                 totFactorsExplanation.Add("spec_bonus");
             }
 
-            if (converter.reqList != null)
-            {
-                foreach (var res in converter.reqList)
-                {
-                    var amountInPart = part.Resources[res.ResourceName].amount;
-                    var bonus = amountInPart / res.Ratio;
-                    PrintLine(40, res.ResourceName, String.Format("{0:0.##}", bonus), String.Format("{0:0.##}/{1:0.##}", amountInPart, res.Ratio));
-                    tot *= bonus;
-                }
-                totFactorsExplanation.Add("req_resource");
-            }
+            AddRequiredResourcesFactors(converter.reqList, part, ref tot, totFactorsExplanation);
+
+            AddMksModuleFactors(converter, vessel, part, bestCrewSkillLevels, ref tot, totFactorsExplanation);
 
             var totExplanation = String.Join(" * ", totFactorsExplanation.ToArray());
             PrintLine(40, " -> Total load", String.Format("{0:0.##%}", tot), totExplanation);
