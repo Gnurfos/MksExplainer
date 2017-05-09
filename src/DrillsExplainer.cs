@@ -14,7 +14,7 @@ using KolonyTools;
 namespace Explainer
 {
  
-    public class DrillsExplainer : GuiTools
+    public class DrillsExplainer : BaseExplainer
     {
 
         public static void DisplayHarvesterModule(ModuleResourceHarvester_USI harvester, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels)
@@ -42,6 +42,8 @@ namespace Explainer
                 bestCrewSkillLevels) : null;
 
             ExplainHarvester(
+                harvester,
+                part,
                 harvester.ResourceName,
                 ResourceCache.GetAbundance(harvester.ResourceName, vessel),
                 numBays,
@@ -50,10 +52,13 @@ namespace Explainer
                 harvester.ThermalEfficiency.Evaluate((float)harvester.GetCoreTemperature()),
                 harvester.Efficiency,
                 specBonus,
-                vessel);
+                vessel,
+                bestCrewSkillLevels);
         }
 
         private static void ExplainHarvester(
+            ModuleResourceHarvester_USI harvester,
+            Part part,
             string resourceName,
             float locationResourceAbundance,
             float numBays,
@@ -62,33 +67,41 @@ namespace Explainer
             float thermalEfficiency,
             float extractionAbundanceMultiplier,
             SpecialistBonusExplanation specialistBonus,
-            Vessel vessel)
+            Vessel vessel,
+            BestCrewSkillLevels bestCrewSkillLevels)
         {
+            var tot = 1d;
+            var totFactorsExplanation = new List<string>();
+
+
             PrintLine(50, "Resource abundance at location", String.Format("{0}", locationResourceAbundance));
             PrintLine(50, "Harvester abundance multiplier", String.Format("\"{0}% base efficiency\"", extractionAbundanceMultiplier * 100));
             PrintLine(50, " -> Rate", String.Format("\"{0}/s\"", extractionAbundanceMultiplier * locationResourceAbundance));
+
             PrintLine(50, "\"Core Temperature\"", String.Format("{0:0.00}", partTemperature));
             // PrintLine(50, "Max temperature", String.Format("{0:0.00}", maxTemp));
             PrintLine(50, " -> \"Thermal Efficiency\"", String.Format("{0}%", 100 * thermalEfficiency),  "(from some curves)");
+            tot *= thermalEfficiency;
+            totFactorsExplanation.Add("ThermalEfficiency");
+
             PrintLine(50, "Separators", numBays.ToString(), "(Drillheads)");
-            float load = thermalEfficiency * numBays;
-            var explanation = "ThermalEfficiency * Drillheads";
+            tot *= numBays;
+            totFactorsExplanation.Add("Drillheads");
+
             if (specialistBonus != null)
             {
                 PrintLine(50, "Specialist bonus", String.Format("{0:0.##}", specialistBonus.GetValue()), specialistBonus.Explain());
-                load *= specialistBonus.GetValue();
-                explanation += " * SpecialistBonus";
+                tot *= specialistBonus.GetValue();
+                totFactorsExplanation.Add("SpecialistBonus");
             }
-            if (Misc.kDrillsUseMksBonuses)
-            {
-                var geoBonus = KolonizationManager.GetGeologyResearchBonus(vessel.mainBody.flightGlobalsIndex);
-                PrintLine(50, "Geology bonus", String.Format("{0:0.##}", geoBonus));
-                load *= geoBonus * geoBonus;
-                explanation += " * geoBonus * geoBonus";
-            }
-            PrintLine(50, " -> \"load\"",  String.Format("{0:0.##}%", load * 100), explanation);
-            PrintLine(50, " -> Actual obtention rate", String.Format("+{0}/s", FormatResourceRate(load * extractionAbundanceMultiplier * locationResourceAbundance)), "Rate * load");
-            PrintSingleResourceRate(60, resourceName, "+", load * extractionAbundanceMultiplier * locationResourceAbundance);
+
+            AddMksModuleFactors(harvester, vessel, part, bestCrewSkillLevels, ref tot, totFactorsExplanation);
+
+            var totExplanation = String.Join(" * ", totFactorsExplanation.ToArray());
+            PrintLine(50, " -> Total load", String.Format("{0:0.##%}", tot), totExplanation);
+
+            PrintLine(50, " -> Actual obtention rate", String.Format("+{0}/s", FormatResourceRate(tot * extractionAbundanceMultiplier * locationResourceAbundance)), "Rate * load");
+            PrintSingleResourceRate(60, resourceName, "+", tot * extractionAbundanceMultiplier * locationResourceAbundance);
         }
 
     }
