@@ -10,6 +10,7 @@ using KSP.UI.Screens;
 using UnityEngine;
 using USITools;
 using KolonyTools;
+using LifeSupport;
 
 namespace Explainer
 {
@@ -29,6 +30,11 @@ namespace Explainer
             if (typeof(ModuleEfficiencyPart).IsInstanceOfType(converter))
             {
                 PrintLine(20, converter.ConverterName + ": Active effiency part (not a real converter)");
+                return;
+            }
+            if (typeof(ModuleHabitation).IsInstanceOfType(converter))
+            {
+                PrintLine(20, converter.ConverterName + ": Active hab part (not a real converter)");
                 return;
             }
             PrintLine(20, converter.ConverterName + ": Activated");

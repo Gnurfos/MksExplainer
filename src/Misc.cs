@@ -9,6 +9,7 @@ using System.Text;
 using KSP.UI.Screens;
 using UnityEngine;
 using USITools;
+using System.Text.RegularExpressions;
 
 namespace Explainer
 {
@@ -21,10 +22,10 @@ namespace Explainer
         }
 
         // To fix root part having the vessel name appended for some reason
+        private static Regex _nameDropper = new Regex(" \\(.*\\)$");
         public static string Name(Part part)
         {
-            var vesselName = Name(part.vessel);
-            return part.name.Replace(" (" + vesselName + ")", "");
+            return _nameDropper.Replace(part.name, "");
         }
 
         public static bool kEffPartsUseMksBonus = false; // Depends on MKS version. Should be false from 0.50.17+

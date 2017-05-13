@@ -8,7 +8,7 @@ namespace Explainer
     public class GuiTools
     {
 
-        private static GUIStyle _labelStyle = new GUIStyle(HighLogic.Skin.label);
+        protected static GUIStyle _labelStyle = new GUIStyle(HighLogic.Skin.label);
 
         public static void PrintLine(int margin, string content)
         {

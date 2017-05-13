@@ -24,9 +24,6 @@ namespace Explainer
      * TODO:
      *  - recyclers explainer
      *  - sifter: explain abundance values (sum for biomes with min)
-     * once MKS is updated:
-     *  - true kolonization bonuses impact, not always geo*geo
-     *  - kolonization bonuses for drills
      */
 
     [KSPScenario(ScenarioCreationOptions.AddToAllGames, GameScenes.SPACECENTER, GameScenes.EDITOR, GameScenes.FLIGHT, GameScenes.TRACKSTATION)]
@@ -87,6 +84,7 @@ namespace Explainer
 
         private BestCrewSkillLevels bestCrewSkillLevels;
         private Part selectedPart;
+        private bool selectedHab = false;
 
         private static ExplainerGui lastInstance;
         public ExplainerGui()
@@ -209,9 +207,24 @@ namespace Explainer
                     DisplayPart(vessel, selectedPart);
                 }
             }
+            else if (selectedHab)
+            {
+                if (GUILayout.Button("Back"))
+                {
+                    selectedHab = false;
+                }
+                else
+                {
+                    DisplayHab(vessel);
+                }
+            }
             else
             {
                 DisplayPartList(vessel);
+                if (GUILayout.Button("Hab"))
+                {
+                    selectedHab = true;
+                }
             }
         }
 
@@ -369,6 +382,11 @@ namespace Explainer
                     BulkConverterExplainer.DisplayConverterModule(mod, vessel, part, GetBestCrewSkillLevels(vessel));
                 }
             }
+        }
+
+        private void DisplayHab(Vessel vessel)
+        {
+            HabExplainer.Display(vessel);
         }
 
         private BestCrewSkillLevels GetBestCrewSkillLevels(Vessel vessel)

@@ -63,6 +63,10 @@
       <HintPath>..\EXT\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="USILifeSupport">
+      <HintPath>..\EXT\USILifeSupport.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="src\*.cs" />

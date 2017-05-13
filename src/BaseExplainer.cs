@@ -3,12 +3,15 @@ using USITools;
 using KolonyTools;
 using System;
 using System.Linq;
+using LifeSupport;
 
 namespace Explainer {
     
     public class BaseExplainer : GuiTools
     {
-        
+
+        private const float EFF_RANGE = 500f;
+
         protected static void AddMksModuleFactors(PartModule module, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels, ref double tot, List<string> totFactorsExplanation)
         {
             if (!BenefitsFromMksModuleBonuses(module))
@@ -101,7 +104,7 @@ namespace Explainer {
 
             List<double> effPartsContributions = new List<double>();
 
-            foreach (var effPartVessel in GetKolonyVessels(vessel))
+            foreach (var effPartVessel in GetKolonyVessels(vessel, EFF_RANGE))
                 foreach (var epm in effPartVessel.vessel.FindPartModulesImplementing<ModuleEfficiencyPart>())
                 {
                     var ep = epm.part;
@@ -127,7 +130,7 @@ namespace Explainer {
             }
 
             List<double> convertersContribution = new List<double>();
-            foreach (var effPartVessel in GetKolonyVessels(vessel))
+            foreach (var effPartVessel in GetKolonyVessels(vessel, EFF_RANGE))
                 foreach (var convMks in effPartVessel.vessel.FindPartModulesImplementing<MKSModule>())
                 {
                     var convs = convMks.part.FindModulesImplementing<BaseConverter>();
@@ -197,7 +200,7 @@ namespace Explainer {
             return epm.eMultiplier * totEff;
         }
 
-        private struct KolonyVessel
+        protected struct KolonyVessel
         {
             public string name;
             public Vessel vessel;
@@ -210,11 +213,10 @@ namespace Explainer {
             }
         }
 
-        private static List<KolonyVessel> GetKolonyVessels(Vessel thisVessel)
+        protected static List<KolonyVessel> GetKolonyVessels(Vessel thisVessel, float range, bool includeThis=true, bool landedOnly=true)
         {
-            const int EFF_RANGE = 500;
             List<KolonyVessel> res = new List<KolonyVessel>();
-            foreach (var v in LogisticsTools.GetNearbyVessels(EFF_RANGE, true, thisVessel, true))
+            foreach (var v in LogisticsTools.GetNearbyVessels(range, includeThis, thisVessel, landedOnly))
             {
                 KolonyVessel item = new KolonyVessel();
                 item.name = Misc.Name(v);
