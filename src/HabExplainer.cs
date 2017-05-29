@@ -51,7 +51,7 @@ namespace Explainer
             double partsMultiplierBoost = 0d;
             foreach (var v in vessels)
             {
-                var vesselLabel = v.thisVessel ? v.name : String.Format("{0} ({1}m away)", v.name, v.distance);
+                var vesselLabel = v.thisVessel ? v.name : String.Format("{0} ({1}m away)", v.name, (int) v.distance);
                 PrintLine(40, "In " + vesselLabel);
                 if (v.vessel.GetCrewCapacity() == 0)
                 {
@@ -61,6 +61,10 @@ namespace Explainer
                 PrintLine(50, String.Format("Crew: {0}/{1}", v.vessel.GetCrewCount(), v.vessel.GetCrewCapacity()));
                 foreach (var hab in v.vessel.FindPartModulesImplementing<ModuleHabitation>())
                 {
+                    if (hab.BonusList.ContainsKey("SwapBay") && (hab.BonusList["SwapBay"] < float.Epsilon))
+                    {
+                        continue; // Not configured
+                    }
                     double partHabTime;
                     double partMultiplierBoost;
                     ExplainHabModule(hab, kolonyCrew, out partHabTime, out partMultiplierBoost);
