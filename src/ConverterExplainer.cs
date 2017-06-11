@@ -49,8 +49,8 @@ namespace Explainer
                                                            converter.SpecialistEfficiencyFactor,
                                                            converter.ExperienceEffect,
                                                            bestCrewSkillLevels);
-                PrintLine(40, "Specialist bonus", String.Format("{0:0.##}", converter.GetCrewBonus()), specBonus.Explain());
-                tot *= converter.GetCrewBonus();
+                PrintLine(40, "Specialist bonus", String.Format("{0:0.##}", specBonus.GetValue()), specBonus.Explain());
+                tot *= specBonus.GetValue();
                 totFactorsExplanation.Add("spec_bonus");
             }
             if (numBays > 1 + float.Epsilon)

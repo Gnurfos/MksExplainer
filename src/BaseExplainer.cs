@@ -177,8 +177,8 @@ namespace Explainer {
                     epm.SpecialistEfficiencyFactor,
                     epm.ExperienceEffect,
                     bestCrewSkillLevels);
-                PrintLine(80, "Crew bonus", String.Format("{0:0.##}", epm.GetCrewBonus()), specBonus.Explain());
-                totEff *= epm.GetCrewBonus();
+                PrintLine(80, "Crew bonus", String.Format("{0:0.##}", specBonus.GetValue()), specBonus.Explain());
+                totEff *= specBonus.GetValue();
             }
             if (epm.reqList != null)
             {
