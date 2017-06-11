@@ -14,13 +14,6 @@ using KolonyTools;
 namespace Explainer
 {
     /*
-     * TODO color codes:
-     *  - term visible in game popups
-     *  - due to part settings
-     *  - due to crew
-     *  - due to environment (planetary abundance, part temp ...)
-     *  - due to resource storage
-     * 
      * TODO:
      *  - recyclers explainer
      *  - sifter: explain abundance values (sum for biomes with min)
