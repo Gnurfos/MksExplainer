@@ -28,8 +28,6 @@ namespace Explainer
             return _nameDropper.Replace(part.name, "");
         }
 
-        public static bool kEffPartsUseMksBonus = false; // Depends on MKS version. Should be false from 0.50.17+
-
         public static bool kDrillsUseMksBonuses = true; // Depends on MKS version. Was false in 0.50.14. True in 0.50.17+
 
     }

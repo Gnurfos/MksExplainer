@@ -190,10 +190,9 @@ namespace Explainer {
                     totEff *= bonus;
                 }
             }
-            if (Misc.kEffPartsUseMksBonus)
             {
-                PrintLine(80, "Geology bonus", String.Format("{0:0.##}", geoBonus));
-                totEff *= geoBonus * geoBonus;
+                PrintLine(80, "Bonus", String.Format("{0:0.##}", epm.EfficiencyBonus), "bays");
+                totEff *= epm.EfficiencyBonus;
             }
             PrintLine(80, "eMultiplier", String.Format("{0}", epm.eMultiplier)); // 0.83
             PrintLine(80, " -> Total contribution", String.Format("{0:0.##}", epm.eMultiplier * totEff));
