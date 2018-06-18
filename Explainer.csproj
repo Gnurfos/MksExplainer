@@ -20,7 +20,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\OUTPUT\</OutputPath>
+    <OutputPath>OUTPUT\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -28,18 +28,18 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\OUTPUT\</OutputPath>
+    <OutputPath>OUTPUT\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\EXT\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>KSP_INSTALL\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>..\EXT\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>KSP_INSTALL\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -49,22 +49,22 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>..\EXT\Managed\UnityEngine.dll</HintPath>
+      <HintPath>KSP_INSTALL\KSP_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="USITools">
-      <HintPath>..\UmbraSpaceIndustries\OUTPUT\USITools.dll</HintPath>
+      <HintPath>KSP_INSTALL\GameData\000_USITools\USITools.dll</HintPath>
     </Reference>
     <Reference Include="KolonyTools">
-      <HintPath>..\EXT\KolonyTools.dll</HintPath>
+      <HintPath>KSP_INSTALL\GameData\UmbraSpaceIndustries\MKS\KolonyTools.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>..\EXT\Managed\UnityEngine.UI.dll</HintPath>
+      <HintPath>KSP_INSTALL\KSP_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="USILifeSupport">
-      <HintPath>..\EXT\USILifeSupport.dll</HintPath>
+      <HintPath>KSP_INSTALL\GameData\UmbraSpaceIndustries\LifeSupport\USILifeSupport.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
