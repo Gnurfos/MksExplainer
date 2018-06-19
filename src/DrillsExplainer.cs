@@ -19,10 +19,6 @@ namespace Explainer
 
         public static void DisplayHarvesterModule(ModuleResourceHarvester_USI harvester, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels)
         {
-            var numBays = harvester.BonusList["SwapBay"];
-            if (numBays < float.Epsilon)
-                return;
-
             if (!harvester.IsActivated)
             {
                 PrintLine(20, harvester.ResourceName + ": Not activated");
@@ -46,7 +42,6 @@ namespace Explainer
                 part,
                 harvester.ResourceName,
                 ResourceCache.GetAbundance(harvester.ResourceName, vessel),
-                numBays,
                 harvester.GetCoreTemperature(),
                 harvester.ThermalEfficiency.maxTime,
                 harvester.ThermalEfficiency.Evaluate((float)harvester.GetCoreTemperature()),
@@ -61,7 +56,6 @@ namespace Explainer
             Part part,
             string resourceName,
             float locationResourceAbundance,
-            float numBays,
             double partTemperature,
             float maxTemp,
             float thermalEfficiency,
@@ -83,10 +77,6 @@ namespace Explainer
             PrintLine(50, " -> \"Thermal Efficiency\"", String.Format("{0}%", 100 * thermalEfficiency),  "(from some curves)");
             tot *= thermalEfficiency;
             totFactorsExplanation.Add("ThermalEfficiency");
-
-            PrintLine(50, "Separators", numBays.ToString(), "(Drillheads)");
-            tot *= numBays;
-            totFactorsExplanation.Add("Drillheads");
 
             if (specialistBonus != null)
             {

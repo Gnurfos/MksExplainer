@@ -18,10 +18,6 @@ namespace Explainer
     {
         public static void DisplayConverterModule(ModuleResourceConverter_USI converter, Vessel vessel, Part part, BestCrewSkillLevels bestCrewSkillLevels)
         {
-            //var numBays = converter.BonusList["SwapBay"];
-            //if (numBays < float.Epsilon)
-            //    return;
-
             if (!converter.IsActivated)
             {
                 PrintLine(20, converter.ConverterName + ": Not activated");
@@ -53,13 +49,7 @@ namespace Explainer
                 tot *= specBonus.GetValue();
                 totFactorsExplanation.Add("spec_bonus");
             }
-            //if (numBays > 1 + float.Epsilon)
-            //{
-            //    PrintLine(40, "Bays", String.Format("{0}", numBays));
-            //    tot *= numBays;
-            //    totFactorsExplanation.Add("num_bays");
-            //}
-                
+
             AddRequiredResourcesFactors(converter.reqList, part, ref tot, totFactorsExplanation);
 
             AddMksModuleFactors(converter, vessel, part, bestCrewSkillLevels, ref tot, totFactorsExplanation);
